@@ -57,7 +57,7 @@ Una IPS de consulta externa atiende pacientes de varias EPS. Recibe unas 300 sol
 | [01-bpmn](01-bpmn/) | Modelos AS-IS y TO-BE |
 | [02-simulacion](02-simulacion/) | Resultados de BIMP y heatmaps |
 | [03-caso-negocio](03-caso-negocio/) | Caso de negocio en Excel |
-| 04-requerimientos | Requerimientos funcionales y no funcionales (en progreso) |
+| [04-requerimientos](04-requerimientos/) | Requerimientos funcionales y no funcionales |
 | 05-arquitectura | Diagrama de arquitectura (en progreso) |
 | 06-diagrama-clases | Diagrama de clases (en progreso) |
 | 07-solucion | Flujo n8n, bot RPA y componente de IA (pendiente) |
