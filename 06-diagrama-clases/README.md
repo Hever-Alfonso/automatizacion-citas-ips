@@ -4,7 +4,7 @@ Adaptación del diagrama de clases base del agente RPA al proceso automatizado d
 
 ## Diagrama de clases
 
-![Diagrama de clases del agente RPA](diagrama-clases-rpa.svg)
+![Diagrama de clases del agente RPA](diagrama-clases-rpa.png)
 
 > Código fuente editable en Mermaid: [diagrama-clases-rpa.mmd](diagrama-clases-rpa.mmd)
 
@@ -44,7 +44,6 @@ classDiagram
         -EstadoSolicitud estado
         -String motivoExcepcion
         +extraerDatosSolicitud(llm: ProveedorLLM) void
-        +datosCompletos() Boolean
         +esAgendable() Boolean
         +registrarVerificacionEPS(autorizado: Boolean) void
         +escalarAAuxiliar(motivo: String) void
