@@ -1,14 +1,14 @@
 # Automatización de la asignación de citas médicas en una IPS
 
-Proyecto del curso [nombre del curso] – EAFIT
+Proyecto del curso Automatización De Procesos De Negocios – EAFIT
 
 ## Integrantes
 
-- Hever Andre Alfonso Jimenez
-- Tomás [apellido]
-- Jerónimo [apellido]
-- Santiago [apellido]
-- [nombre de Curelop]
+- Hever Andre Alfonso Jimenez – [Hever-Alfonso](https://github.com/Hever-Alfonso)
+- Tomás Ramírez Galeano – [unbot2313](https://github.com/unbot2313)
+- Jerónimo Restrepo – [jrestrepoc](https://github.com/jrestrepoc)
+- Santiago Ramírez – [Sramirezr](https://github.com/Sramirezr)
+- David Curelop – [DavidCurelop](https://github.com/DavidCurelop)
 
 ## Problemática
 
@@ -65,4 +65,4 @@ Una IPS de consulta externa atiende pacientes de varias EPS. Recibe unas 300 sol
 
 ## Backlog
 
-El seguimiento del trabajo está en la pestaña **Projects** de este repositorio.
+El seguimiento del trabajo está en la pestaña **Projects** de este repositorio: [tablero del proyecto](https://github.com/users/Hever-Alfonso/projects/8).
