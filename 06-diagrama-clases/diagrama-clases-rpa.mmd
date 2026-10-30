@@ -1,0 +1,172 @@
+classDiagram
+    direction TB
+
+    class Paciente {
+        -String idPaciente
+        -String tipoDocumento
+        -String numeroDocumento
+        -String nombreCompleto
+        -String telefono
+        -String correo
+        -String eps
+        -Boolean afiliacionActiva
+        -Boolean consentimientoDatos
+        +estaActivo() Boolean
+        +actualizarEstadoEPS(activo: Boolean) void
+        +tieneConsentimiento() Boolean
+    }
+
+    class Solicitud {
+        -String idSolicitud
+        -Paciente paciente
+        -Cita citaAsignada
+        -String canalOrigen
+        -String mensajeOriginal
+        -LocalDateTime fechaRecepcion
+        -String especialidad
+        -String urgencia
+        -String codigoAutorizacion
+        -Boolean autorizacionVigente
+        -EstadoSolicitud estado
+        -String motivoExcepcion
+        +extraerDatosSolicitud(llm: ProveedorLLM) void
+        +datosCompletos() Boolean
+        +esAgendable() Boolean
+        +registrarVerificacionEPS(autorizado: Boolean) void
+        +escalarAAuxiliar(motivo: String) void
+    }
+
+    class Cita {
+        -String idCita
+        -Paciente paciente
+        -Solicitud solicitudOrigen
+        -LocalDateTime fechaHora
+        -String especialidad
+        -String medicoAsignado
+        -String consultorio
+        -EstadoCita estado
+        -Boolean confirmacionEnviada
+        -Boolean recordatorioEnviado
+        +confirmar() void
+        +reprogramar(nuevaFechaHora: LocalDateTime) void
+        +cancelar(motivo: String) void
+        +marcarRecordatorioEnviado() void
+    }
+
+    class AgenteRPA {
+        -String idAgente
+        -EstadoAgente estado
+        -String urlPortalEPS
+        -String urlAgendaIPS
+        -PlanificadorTareas planificador
+        -EjecutorAcciones ejecutor
+        -ContextoNavegador navegador
+        -List~ResultadoPaso~ historial
+        +verificarPacienteEPS(paciente: Paciente, solicitud: Solicitud) Boolean
+        +buscarEspacioAgenda(solicitud: Solicitud) List~LocalDateTime~
+        +registrarCita(solicitud: Solicitud, fechaHora: LocalDateTime) Cita
+        +reprogramarCita(cita: Cita, nuevaFechaHora: LocalDateTime) Cita
+        +cancelarCita(cita: Cita) Boolean
+        +ejecutarPrompt(prompt: String) ReporteEjecucion
+        -ejecutarCiclo(meta: String) ReporteEjecucion
+    }
+
+    class ProveedorLLM {
+        <<interface>>
+        +generarRespuesta(mensajes: List~Mensaje~, esquema: EsquemaJSON) RespuestaLLM
+        +extraerDatos(contenido: String, esquema: EsquemaJSON) Map~String, Any~
+    }
+
+    class PlanificadorTareas {
+        -ProveedorLLM llm
+        -PlantillaPrompt plantilla
+        +crearSiguientePaso(meta: String, historial: List~ResultadoPaso~, estado: EstadoDOM) PasoAccion
+        +metaCumplida(meta: String, historial: List~ResultadoPaso~, estado: EstadoDOM) Boolean
+    }
+
+    class ContextoNavegador {
+        -Page paginaActiva
+        -MotorDriver motor
+        +navegar(url: String) void
+        +capturarEstado() EstadoDOM
+        +tomarCaptura() Byte[]
+        +obtenerPagina() Page
+        +cerrar() void
+    }
+
+    class EstadoDOM {
+        +String url
+        +String titulo
+        +List~NodoElemento~ elementosInteractivos
+        +Byte[] capturaPantalla
+        +aJSON() String
+    }
+
+    class EjecutorAcciones {
+        -ContextoNavegador navegador
+        +ejecutar(paso: PasoAccion) ResultadoPaso
+    }
+
+    class PasoAccion {
+        <<abstract>>
+        +String idPaso
+        +String razonamiento
+    }
+
+    class AccionNavegar {
+        +String url
+    }
+
+    class AccionClic {
+        +String selector
+        +Punto coordenadas
+    }
+
+    class AccionEscribir {
+        +String selector
+        +String texto
+        +Boolean estaEncriptado
+    }
+
+    class AccionExtraer {
+        +String definicionEsquema
+        +Map~String, Any~ datosExtraidos
+    }
+
+    class ResultadoPaso {
+        +String idPaso
+        +Boolean exito
+        +String mensajeError
+        +Duration duracion
+        +EstadoDOM estadoPosterior
+    }
+
+    %% Relaciones del dominio (Caso IPS)
+    Paciente "1" <-- "1..*" Solicitud : pertenece a
+    Solicitud "1" <--> "0..1" Cita : genera
+    Paciente "1" <-- "0..*" Cita : asignada a
+    Solicitud ..> ProveedorLLM : extrae datos con
+
+    %% Relaciones del Agente RPA con el dominio
+    AgenteRPA ..> Solicitud : procesa
+    AgenteRPA ..> Paciente : verifica en EPS
+    AgenteRPA ..> Cita : agenda y gestiona
+
+    %% Relaciones internas del Agente RPA
+    AgenteRPA *-- PlanificadorTareas : posee
+    AgenteRPA *-- EjecutorAcciones : posee
+    AgenteRPA *-- ContextoNavegador : gestiona
+    AgenteRPA o-- ResultadoPaso : registra historial
+    PlanificadorTareas --> ProveedorLLM : consulta
+    PlanificadorTareas ..> EstadoDOM : analiza
+    PlanificadorTareas ..> PasoAccion : resuelve
+    EjecutorAcciones --> ContextoNavegador : controla
+    EjecutorAcciones ..> PasoAccion : interpreta
+    EjecutorAcciones ..> ResultadoPaso : retorna
+    ContextoNavegador ..> EstadoDOM : genera
+    ResultadoPaso --> EstadoDOM : referencia
+
+    PasoAccion <|-- AccionNavegar
+    PasoAccion <|-- AccionClic
+    PasoAccion <|-- AccionEscribir
+    PasoAccion <|-- AccionExtraer
