@@ -1,0 +1,86 @@
+flowchart LR
+    %% ===== Actores =====
+    PAC(["👤 Paciente"])
+    AUX(["👤 Auxiliar"])
+
+    %% ===== Canales =====
+    subgraph CAN["Canales"]
+        direction TB
+        WA["WhatsApp Business API"]
+        MAIL["Correo (IMAP / SMTP)"]
+        TEL["Telefonía +<br/>voz a texto"]
+    end
+
+    %% ===== Orquestador =====
+    subgraph ORQ["Orquestador · n8n"]
+        direction TB
+        WH["Entrada única<br/>(webhooks / triggers)<br/>RF-01"]
+        FLUJO["Flujo de agendamiento"]
+        NOTI["Notificaciones<br/>RF-06 · RF-07"]
+        CRON["Programador<br/>recordatorio 24 h<br/>RF-07"]
+        RESP["Respuestas al recordatorio<br/>RF-08"]
+        EXC["Excepciones<br/>RF-09"]
+    end
+
+    %% ===== IA =====
+    subgraph IA["Componente IA"]
+        LLM["Extractor LLM<br/>texto → JSON con esquema<br/>RF-02"]
+    end
+
+    %% ===== RPA =====
+    subgraph RPA["Bot RPA · AgenteRPA"]
+        direction TB
+        API["API del bot<br/>verificar · buscar · registrar<br/>reprogramar · cancelar"]
+        AG["Planificador + Ejecutor<br/>navegador headless<br/>RF-03 · RF-04 · RF-05"]
+    end
+
+    %% ===== Sistemas actuales =====
+    subgraph EXT["Sistemas actuales (no se modifican)"]
+        direction TB
+        EPS["Portal web EPS<br/>(sin API)"]
+        AGE["Sistema de agendamiento IPS"]
+    end
+
+    %% ===== Datos y seguridad =====
+    subgraph DATA["Datos y seguridad"]
+        direction TB
+        DB[("BD de solicitudes<br/>y trazabilidad<br/>RNF-05")]
+        SEC[["Bóveda de credenciales<br/>RNF-01"]]
+    end
+
+    %% ===== Flujo principal =====
+    PAC -->|"pide cita"| CAN
+    CAN -->|"mensaje / transcripción"| WH
+    WH --> FLUJO
+    FLUJO -->|"texto de la solicitud"| LLM
+    LLM -->|"datos estructurados"| FLUJO
+    FLUJO -->|"HTTP"| API
+    API --> AG
+    AG -->|"por pantalla"| EPS
+    AG -->|"por pantalla"| AGE
+    API -->|"resultado"| FLUJO
+
+    %% ===== Salidas =====
+    FLUJO --> NOTI
+    CRON --> NOTI
+    NOTI -->|"confirmación / recordatorio"| CAN
+    CAN -->|"respuesta"| RESP
+    RESP -->|"cancelar / reprogramar"| API
+    FLUJO -->|"inactivo, sin autorización,<br/>sin espacio o falla"| EXC
+    EXC -->|"caso + datos + motivo"| AUX
+
+    %% ===== Transversal =====
+    FLUJO -.->|"estado de cada paso"| DB
+    AG -.->|"lee credenciales"| SEC
+
+    %% ===== Estilos =====
+    classDef n8n fill:#fde2e4,stroke:#c9184a,color:#000
+    classDef ia fill:#e0e7ff,stroke:#4338ca,color:#000
+    classDef rpa fill:#dcfce7,stroke:#15803d,color:#000
+    classDef ext fill:#f1f5f9,stroke:#64748b,color:#000,stroke-dasharray:4 3
+    classDef data fill:#fef9c3,stroke:#a16207,color:#000
+    class WH,FLUJO,NOTI,CRON,RESP,EXC n8n
+    class LLM ia
+    class API,AG rpa
+    class EPS,AGE ext
+    class DB,SEC data

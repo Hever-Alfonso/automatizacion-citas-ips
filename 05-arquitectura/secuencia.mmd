@@ -1,0 +1,46 @@
+sequenceDiagram
+    autonumber
+    actor P as Paciente
+    participant N as n8n
+    participant IA as IA (LLM)
+    participant B as Bot RPA
+    participant E as Portal EPS
+    participant A as Agenda IPS
+    participant D as BD trazabilidad
+    actor X as Auxiliar
+
+    P->>N: Solicitud (WhatsApp, correo o llamada)
+    N->>D: Registrar solicitud (canal, fecha, hora)
+    N->>IA: Texto de la solicitud
+    IA-->>N: JSON: paciente, documento, EPS, especialidad, urgencia
+    N->>B: verificarPacienteEPS(documento)
+    B->>E: Consulta por pantalla
+    E-->>B: Activo / autorización
+    alt Inactivo o sin autorización
+        B-->>N: No agendable
+        N->>X: Excepción con datos y motivo
+    else Activo y autorizado
+        B-->>N: OK
+        N->>B: buscarEspacioAgenda(especialidad, urgencia)
+        B->>A: Busca cupo por pantalla
+        alt Sin espacio
+            B-->>N: Sin cupo
+            N->>X: Excepción con datos y motivo
+        else Hay espacio
+            N->>B: registrarCita(paciente, cupo)
+            B->>A: Verifica cupo libre y sin duplicado, guarda
+            B-->>N: Cita registrada
+            N->>D: Estado = agendada
+            N->>P: Confirmación (fecha, hora, médico, lugar)
+            Note over N: 24 h antes de la cita
+            N->>P: Recordatorio
+            P->>N: Confirma / Cancela / Reprograma
+            alt Cancela
+                N->>B: cancelarCita()
+                B->>A: Libera el espacio
+            else Reprograma
+                N->>B: buscarEspacioAgenda() y registrarCita()
+            end
+            N->>D: Estado final
+        end
+    end
