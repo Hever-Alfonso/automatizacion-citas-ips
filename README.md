@@ -58,10 +58,10 @@ Una IPS de consulta externa atiende pacientes de varias EPS. Recibe unas 300 sol
 | [02-simulacion](02-simulacion/) | Resultados de BIMP y heatmaps |
 | [03-caso-negocio](03-caso-negocio/) | Caso de negocio en Excel |
 | [04-requerimientos](04-requerimientos/) | Requerimientos funcionales y no funcionales |
-| 05-arquitectura | Diagrama de arquitectura (en progreso) |
+| [05-arquitectura](05-arquitectura/) | Diagrama de arquitectura |
 | [06-diagrama-clases](06-diagrama-clases/) | Diagrama de clases del agente RPA |
-| 07-solucion | Flujo n8n, bot RPA y componente de IA (pendiente) |
-| 08-chats-prueba | Chats de prueba del componente de IA (pendiente) |
+| [07-solucion](07-solucion/) | Flujo n8n, bot RPA y componente de IA |
+| [08-chats-prueba](08-chats-prueba/) | Chats de prueba del componente de IA |
 
 ## Backlog
 

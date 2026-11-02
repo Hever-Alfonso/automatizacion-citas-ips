@@ -1,0 +1,65 @@
+{
+  "componente": "Extractor de datos de solicitud médica (RF-02)",
+  "nodoN8n": "@n8n/n8n-nodes-langchain.informationExtractor",
+  "modelo": {
+    "proveedor": "Google Gemini (Google AI Studio)",
+    "nodoModelo": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+    "modelName": "models/gemini-2.5-flash",
+    "temperature": 0
+  },
+  "resiliencia": {
+    "retryOnFail": true,
+    "maxTries": 3,
+    "waitBetweenTriesMs": 3000,
+    "onError": "continueErrorOutput",
+    "destinoError": "Pasar excepción al auxiliar"
+  },
+  "systemPromptTemplate": "Eres el asistente de agendamiento de una IPS en Colombia. Extrae solo la información que aparece en el mensaje del paciente. Si un dato no aparece, deja el campo vacío.",
+  "esquemaExtraccion": {
+    "type": "object",
+    "properties": {
+      "nombreCompleto": {
+        "type": "string",
+        "description": "Nombre completo del paciente"
+      },
+      "tipoDocumento": {
+        "type": "string",
+        "enum": ["CC", "TI", "CE", "PA", ""],
+        "description": "Tipo de documento: CC, TI, CE o PA. Si dice cédula, es CC"
+      },
+      "numeroDocumento": {
+        "type": "string",
+        "description": "Número de documento del paciente, solo dígitos"
+      },
+      "eps": {
+        "type": "string",
+        "description": "EPS del paciente, si la menciona"
+      },
+      "especialidad": {
+        "type": "string",
+        "enum": [
+          "medicina general",
+          "odontologia",
+          "pediatria",
+          "dermatologia",
+          "cardiologia"
+        ],
+        "description": "Una de: medicina general, odontologia, pediatria, dermatologia, cardiologia. Si no la dice, medicina general"
+      },
+      "urgencia": {
+        "type": "string",
+        "enum": ["alta", "normal"],
+        "description": "alta si dice que es urgente o describe síntomas graves; si no, normal"
+      }
+    }
+  },
+  "normalizacionPosterior": {
+    "nodo": "Unir datos extraídos",
+    "reglas": {
+      "tipoDocumento": "Por defecto 'CC' cuando el campo viene vacío",
+      "numeroDocumento": "Elimina caracteres no numéricos (puntos, espacios o guiones)",
+      "especialidad": "Normaliza NFD (sin tildes), minúsculas y 'medicina general' por defecto",
+      "urgencia": "'alta' únicamente si el valor normalizado es 'alta'; en cualquier otro caso 'normal'"
+    }
+  }
+}
