@@ -1,6 +1,6 @@
 # Solución implementada – Agendamiento de citas IPS
 
-Implementación ejecutable del [proceso TO-BE](../01-bpmn/tobe.svg) en **n8n**, integrando la extracción estructurada con **IA (Google Gemini)** y la automatización **RPA** (con pantallas de portal EPS y agenda simuladas mediante datos de prueba) de acuerdo con los [requerimientos](../04-requerimientos/requerimientos.md), la [arquitectura](../05-arquitectura/README.md) y el [diagrama de clases](../06-diagrama-clases/README.md).
+Implementación ejecutable del [proceso TO-BE](../01-bpmn/tobe.svg) en **n8n**, integrando la extracción estructurada con **IA (Google Gemini)** y la automatización **RPA** (con pantallas de portal EPS y agenda simuladas mediante datos de prueba) de acuerdo con los [requerimientos](../04-requerimientos/README.md), la [arquitectura](../05-arquitectura/README.md) y el [diagrama de clases](../06-diagrama-clases/README.md).
 
 ## Archivos de esta carpeta
 

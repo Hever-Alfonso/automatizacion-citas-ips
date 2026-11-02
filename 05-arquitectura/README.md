@@ -1,6 +1,6 @@
 # Arquitectura de la solución – Agendamiento de citas IPS
 
-Arquitectura de la solución que automatiza el [proceso TO-BE](../01-bpmn/tobe.svg). Cada componente sale de los [requerimientos](../04-requerimientos/requerimientos.md): n8n orquesta, la IA entiende el mensaje y el bot RPA opera el portal de la EPS y el sistema de agendamiento por pantalla, porque ninguno de los dos tiene API.
+Arquitectura de la solución que automatiza el [proceso TO-BE](../01-bpmn/tobe.svg). Cada componente sale de los [requerimientos](../04-requerimientos/README.md): n8n orquesta, la IA entiende el mensaje y el bot RPA opera el portal de la EPS y el sistema de agendamiento por pantalla, porque ninguno de los dos tiene API.
 
 ## Diagrama de componentes
 
