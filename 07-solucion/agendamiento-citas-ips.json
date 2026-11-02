@@ -1,0 +1,896 @@
+{
+  "name": "Agendamiento de citas IPS",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Agendamiento de citas médicas – IPS (TO-BE)\nn8n orquesta, Gemini extrae los datos (RF-02) y los pasos de RPA verifican en la EPS, buscan espacio y registran la cita (RF-03 a RF-05).\n\n**Antes de probar:** en el nodo **Google Gemini** crea la credencial con tu API key de Google AI Studio.\n\n**Probar:** Execute workflow. El nodo *Enviar recordatorio* muestra 3 links: ábrelos para responder como paciente.\n\n**Con datos de ejemplo:** los pasos de RPA (el portal EPS y la agenda no existen), el envío por WhatsApp/correo y la BD de trazabilidad.\n\nPacientes de prueba: 1037654321 (activo), 43210987 (sin autorización para dermatología), 11223344 (inactivo), 98765432 (cardiología, sin agenda).",
+        "height": 420,
+        "width": 600,
+        "color": 5
+      },
+      "id": "2d3e9ca1-b71f-5b55-a2b1-0fb718792b94",
+      "name": "Nota",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -520,
+        -560
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "dd35cb60-3b9f-50ab-9bbc-20ddc1175fa2",
+      "name": "Probar con un ejemplo",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ada16117-4359-54cf-a36c-b82067e075be",
+              "name": "canal",
+              "value": "WhatsApp",
+              "type": "string"
+            },
+            {
+              "id": "30a31353-e11d-5ff4-bc99-449d5c8f1c8b",
+              "name": "telefono",
+              "value": "3001234567",
+              "type": "string"
+            },
+            {
+              "id": "d74efbec-f044-5999-8776-a51f3ec39179",
+              "name": "correo",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "b9f09772-368d-5a38-b5d1-d95167a02f85",
+              "name": "mensaje",
+              "type": "string",
+              "value": "Hola, buenas tardes. Soy Ana Gómez, cédula 1037654321, de Sura. Necesito una cita de medicina general, es urgente porque tengo fiebre hace 3 días."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "44913f66-1d5c-58fa-addb-fe74372ffefe",
+      "name": "Ejemplo de solicitud",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -280,
+        140
+      ],
+      "notes": "Cambia el mensaje para probar otros casos",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "solicitud-cita",
+        "options": {}
+      },
+      "id": "22792851-1805-51a2-b651-e479685853f9",
+      "name": "Recibir solicitud",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -280,
+        -80
+      ],
+      "notes": "RF-01 · WhatsApp, correo o llamada transcrita",
+      "notesInFlow": true,
+      "webhookId": "bd61c584-b1eb-50fd-939a-95931309fe59"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bedf2b4d-737f-528c-a66f-2f52f2f4c2f7",
+              "name": "modo_demo",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "4147f34f-58bf-5fcb-94bc-ea46154cce51",
+              "name": "nombre_ips",
+              "value": "IPS Salud Integral",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "a574b20c-5f0e-5941-a7e6-eb654e00b38a",
+      "name": "Configuración",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -40,
+        0
+      ],
+      "notes": "Modo demo y nombre de la IPS",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// RF-01 y RNF-05: toda solicitud entra por aquí, venga del webhook o del ejemplo,\n// y queda registrada con su canal, fecha y hora.\nconst s = $json.body ?? $json;\nconst canal = s.canal || 'WhatsApp';\nreturn {\n  json: {\n    idSolicitud: 'SOL-' + Date.now(),\n    canalOrigen: canal,\n    mensajeOriginal: String(s.mensaje || ''),\n    fechaRecepcion: new Date().toISOString(),\n    paciente: { telefono: String(s.telefono || ''), correo: String(s.correo || '') },\n    estado: 'Recibida',\n    historial: [{ fecha: new Date().toISOString(), paso: 'Solicitud recibida por ' + canal, actor: 'n8n' }],\n  },\n};"
+      },
+      "id": "3d53312f-069b-5c48-b988-69d2631171f0",
+      "name": "Registrar solicitud",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        180,
+        0
+      ],
+      "notes": "RF-01 · RNF-05",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.mensajeOriginal }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "nombreCompleto",
+              "description": "Nombre completo del paciente"
+            },
+            {
+              "name": "tipoDocumento",
+              "description": "Tipo de documento: CC, TI, CE o PA. Si dice cédula, es CC"
+            },
+            {
+              "name": "numeroDocumento",
+              "description": "Número de documento del paciente, solo dígitos"
+            },
+            {
+              "name": "eps",
+              "description": "EPS del paciente, si la menciona"
+            },
+            {
+              "name": "especialidad",
+              "description": "Una de: medicina general, odontologia, pediatria, dermatologia, cardiologia. Si no la dice, medicina general"
+            },
+            {
+              "name": "urgencia",
+              "description": "alta si dice que es urgente o describe síntomas graves; si no, normal"
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "Eres el asistente de agendamiento de una IPS en Colombia. Extrae solo la información que aparece en el mensaje del paciente. Si un dato no aparece, deja el campo vacío."
+        }
+      },
+      "id": "c58ce910-a6c1-5d19-a395-abb8fb03a947",
+      "name": "Extraer datos (IA)",
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1,
+      "position": [
+        400,
+        0
+      ],
+      "notes": "RF-02 · IA",
+      "notesInFlow": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0
+        }
+      },
+      "id": "5b40ba45-d8e5-5ef0-99c0-53d43a41a3d7",
+      "name": "Google Gemini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        420,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// RF-02: junta lo que extrajo Gemini con la solicitud registrada.\nconst sol = $('Registrar solicitud').first().json;\nconst ia = $json.output ?? {};\nconst limpiar = (t) => String(t ?? '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().trim();\nreturn {\n  json: {\n    ...sol,\n    paciente: {\n      ...sol.paciente,\n      nombreCompleto: ia.nombreCompleto || '',\n      tipoDocumento: ia.tipoDocumento || 'CC',\n      numeroDocumento: String(ia.numeroDocumento || '').replace(/\\D/g, ''),\n      eps: ia.eps || '',\n    },\n    especialidad: limpiar(ia.especialidad) || 'medicina general',\n    urgencia: limpiar(ia.urgencia) === 'alta' ? 'alta' : 'normal',\n    estado: 'Datos extraídos',\n    historial: [...sol.historial, { fecha: new Date().toISOString(), paso: 'Datos extraídos del mensaje', actor: 'IA (Gemini)' }],\n  },\n};"
+      },
+      "id": "0f81e8ce-9235-5ff4-b518-062a49034d16",
+      "name": "Unir datos extraídos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// RPA con datos de ejemplo. En producción, este paso lo hace el bot por pantalla en el portal o la agenda.\n// RF-03: simula al bot entrando por pantalla al portal de la EPS.\nconst pacientesEPS = {\n  '1037654321': { nombreCompleto: 'Ana Gómez', eps: 'Sura', activo: true, autorizaciones: ['dermatologia'] },\n  '43210987': { nombreCompleto: 'Luisa Pérez', eps: 'Sanitas', activo: true, autorizaciones: [] },\n  '98765432': { nombreCompleto: 'Carlos Ruiz', eps: 'Nueva EPS', activo: true, autorizaciones: ['cardiologia'] },\n  '11223344': { nombreCompleto: 'Pedro Díaz', eps: 'Sura', activo: false, autorizaciones: [] },\n};\nconst requiereAutorizacion = ['dermatologia', 'cardiologia'];\n\nconst s = $json;\nconst p = pacientesEPS[s.paciente.numeroDocumento];\nconst necesita = requiereAutorizacion.includes(s.especialidad);\nconst activo = Boolean(p && p.activo);\nconst autorizado = activo && (!necesita || p.autorizaciones.includes(s.especialidad));\nlet motivo = '';\nif (!p) motivo = 'El documento no aparece en el portal de la EPS';\nelse if (!activo) motivo = 'El paciente está inactivo en la EPS';\nelse if (!autorizado) motivo = 'La especialidad requiere autorización y el paciente no la tiene';\n\nreturn {\n  json: {\n    ...s,\n    paciente: {\n      ...s.paciente,\n      nombreCompleto: s.paciente.nombreCompleto || (p ? p.nombreCompleto : ''),\n      eps: p ? p.eps : s.paciente.eps,\n      afiliacionActiva: activo,\n    },\n    autorizacionVigente: autorizado,\n    codigoAutorizacion: autorizado && necesita ? 'AUT-' + s.paciente.numeroDocumento : '',\n    motivoExcepcion: motivo,\n    estado: motivo ? 'No agendable' : 'Verificada en EPS',\n    historial: [...s.historial, { fecha: new Date().toISOString(), paso: motivo || 'Paciente activo y autorizado en el portal EPS', actor: 'Bot RPA' }],\n  },\n};"
+      },
+      "id": "97d7db82-cd83-5dd8-83ef-fef3e18cab71",
+      "name": "Verificar paciente en portal EPS (RPA)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        0
+      ],
+      "notes": "RF-03 · RPA",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5e2bd47c-c417-5828-86d7-9bbd933a8589",
+              "leftValue": "={{ $json.paciente.afiliacionActiva === true && $json.autorizacionVigente === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "12b14316-01e5-55ac-bcd1-fcfa54993449",
+      "name": "¿Activo y autorizado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// RPA con datos de ejemplo. En producción, este paso lo hace el bot por pantalla en el portal o la agenda.\n// RF-04: simula al bot buscando el cupo más cercano en la agenda de la IPS.\n// El primer cupo de cada especialidad queda para las solicitudes urgentes.\nconst agenda = {\n  'medicina general': { medico: 'Dra. Laura Mejía', consultorio: 'Consultorio 101', horas: [7, 8, 9, 14, 15] },\n  'odontologia': { medico: 'Dr. Felipe Mora', consultorio: 'Consultorio 204', horas: [8, 11] },\n  'pediatria': { medico: 'Dra. Sara Ríos', consultorio: 'Consultorio 110', horas: [9, 16] },\n  'dermatologia': { medico: 'Dr. Juan Ochoa', consultorio: 'Consultorio 302', horas: [10] },\n  'cardiologia': { medico: 'Dr. Andrés Gil', consultorio: 'Consultorio 305', horas: [] },\n};\n\nconst s = $json;\nconst m = agenda[s.especialidad] ?? agenda['medicina general'];\n\n// Cupos de los próximos 5 días hábiles\nconst cupos = [];\nconst dia = new Date();\nlet habiles = 0;\nwhile (habiles < 5) {\n  dia.setDate(dia.getDate() + 1);\n  if (dia.getDay() === 0 || dia.getDay() === 6) continue;\n  habiles++;\n  const fecha = dia.toISOString().slice(0, 10);\n  for (const h of m.horas) cupos.push(fecha + 'T' + String(h).padStart(2, '0') + ':00:00-05:00');\n}\n\nconst desde = s.citaAnterior ? s.citaAnterior.fechaHora : '';\nlet libres = cupos.filter((c) => c > desde);\nif (s.urgencia !== 'alta') libres = libres.slice(1);\nconst elegido = libres[0];\n\nreturn {\n  json: {\n    ...s,\n    hayEspacio: Boolean(elegido),\n    cita: elegido\n      ? { fechaHora: elegido, especialidad: s.especialidad, medicoAsignado: m.medico, consultorio: m.consultorio }\n      : (s.cita ?? null),\n    motivoExcepcion: elegido ? '' : 'No hay espacio en ' + s.especialidad + ' en los próximos 5 días hábiles',\n    estado: elegido ? 'Espacio encontrado' : 'Sin espacio',\n    historial: [...s.historial, { fecha: new Date().toISOString(), paso: elegido ? 'Espacio encontrado: ' + elegido : 'Sin espacio en la agenda', actor: 'Bot RPA' }],\n  },\n};"
+      },
+      "id": "362a7404-ba34-5f52-8969-c591d2ab1125",
+      "name": "Buscar espacio en la agenda (RPA)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        -120
+      ],
+      "notes": "RF-04 · RPA",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "22a6fb07-ca4a-564d-abcb-6ba92e07c8fc",
+              "leftValue": "={{ $json.hayEspacio === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ba421a1c-68e4-5e08-aa3d-99206d4c3aa6",
+      "name": "¿Hay espacio?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1560,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// RPA con datos de ejemplo. En producción, este paso lo hace el bot por pantalla en el portal o la agenda.\n// RF-05: simula al bot registrando la cita. Antes de guardar verifica que el cupo siga libre\n// y que el paciente no tenga ya esa cita. Si es una reprogramación, libera el cupo anterior.\nconst s = $json;\nconst { citaAnterior, hayEspacio, ...resto } = s;\nconst cita = {\n  ...s.cita,\n  idCita: 'CITA-' + s.paciente.numeroDocumento + '-' + s.cita.fechaHora.slice(0, 16).replace(/\\D/g, ''),\n  estado: 'Agendada',\n  confirmacionEnviada: false,\n  recordatorioEnviado: false,\n};\nconst texto = citaAnterior\n  ? 'Cita movida del ' + citaAnterior.fechaHora + ' al ' + cita.fechaHora + '; cupo anterior liberado'\n  : 'Cita registrada en el sistema de agendamiento';\n\nreturn {\n  json: {\n    ...resto,\n    cita,\n    estado: 'Agendada',\n    historial: [...s.historial, { fecha: new Date().toISOString(), paso: texto, actor: 'Bot RPA' }],\n  },\n};"
+      },
+      "id": "2568b6e7-da23-56ad-b064-72a6a5067c66",
+      "name": "Registrar cita (RPA)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        -240
+      ],
+      "notes": "RF-05 · RPA",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// RF-06: confirmación por el mismo canal (simulada; en producción va el nodo de WhatsApp o Gmail).\nconst c = $json.cita;\nconst cuando = new Date(c.fechaHora).toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'full', timeStyle: 'short' });\nconst ips = $('Configuración').first().json.nombre_ips;\nreturn {\n  json: {\n    ...$json,\n    cita: { ...c, confirmacionEnviada: true },\n    mensajeEnviado: {\n      canal: $json.canalOrigen,\n      para: $json.paciente.telefono || $json.paciente.correo,\n      texto: `Hola ${$json.paciente.nombreCompleto}, tu cita de ${$json.especialidad} quedó para el ${cuando} con ${c.medicoAsignado}, ${c.consultorio}, ${ips}. Código: ${c.idCita}.`,\n    },\n    historial: [...$json.historial, { fecha: new Date().toISOString(), paso: 'Confirmación enviada por ' + $json.canalOrigen, actor: 'n8n' }],\n  },\n};"
+      },
+      "id": "dd03e906-20b5-51f6-a7be-c60ec695883a",
+      "name": "Enviar confirmación",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        -240
+      ],
+      "notes": "RF-06",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "amount": "={{ $('Configuración').first().json.modo_demo ? 10 : Math.max(1, Math.round((new Date($json.cita.fechaHora).getTime() - 86400000 - Date.now()) / 1000)) }}",
+        "unit": "seconds"
+      },
+      "id": "cc6906e9-e751-52c7-a5cb-c9cf61ccfea3",
+      "name": "Esperar hasta 24 h antes",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2220,
+        -240
+      ],
+      "notes": "RF-07 · en modo demo espera 10 s",
+      "notesInFlow": true,
+      "webhookId": "ec7f4685-4947-5c72-b7ec-393ff096d4d5"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// RF-07: recordatorio 24 h antes, con opción de confirmar, cancelar o reprogramar (envío simulado).\n// En la demo, abre uno de los links para responder como el paciente.\nconst c = $json.cita;\nconst cuando = new Date(c.fechaHora).toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'full', timeStyle: 'short' });\nconst url = $execution.resumeUrl;\nreturn {\n  json: {\n    ...$json,\n    cita: { ...c, recordatorioEnviado: true },\n    mensajeEnviado: {\n      canal: $json.canalOrigen,\n      para: $json.paciente.telefono || $json.paciente.correo,\n      texto: `Te recordamos tu cita de ${$json.especialidad} el ${cuando} con ${c.medicoAsignado}. Responde CONFIRMO, CANCELO o REPROGRAMO.`,\n    },\n    responderDemo: {\n      confirma: url + '?respuesta=confirma',\n      cancela: url + '?respuesta=cancela',\n      reprograma: url + '?respuesta=reprograma',\n    },\n    historial: [...$json.historial, { fecha: new Date().toISOString(), paso: 'Recordatorio enviado', actor: 'n8n' }],\n  },\n};"
+      },
+      "id": "efc58403-9592-521b-9e08-548b6c7fb47c",
+      "name": "Enviar recordatorio",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2440,
+        -240
+      ],
+      "notes": "RF-07",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "httpMethod": "GET",
+        "limitWaitTime": true,
+        "limitType": "afterTimeInterval",
+        "resumeAmount": 23,
+        "resumeUnit": "hours",
+        "options": {}
+      },
+      "id": "767efdc5-13c3-5953-a7cc-075f67efdbfc",
+      "name": "Esperar respuesta del paciente",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2660,
+        -240
+      ],
+      "notes": "RF-08",
+      "notesInFlow": true,
+      "webhookId": "9049a164-ae4c-5dd0-8370-c9270ad06faa"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// RF-08: toma la respuesta del paciente. Si no respondió a tiempo, queda \"sin respuesta\".\nconst sol = $('Enviar recordatorio').first().json;\nconst respuesta = String($json.query?.respuesta ?? '').toLowerCase().trim() || 'sin respuesta';\nconst { responderDemo, ...resto } = sol;\nreturn {\n  json: {\n    ...resto,\n    respuesta,\n    historial: [...sol.historial, { fecha: new Date().toISOString(), paso: 'El paciente responde: ' + respuesta, actor: 'Paciente' }],\n  },\n};"
+      },
+      "id": "63ea2662-a441-5186-b1cd-22747660f103",
+      "name": "Leer respuesta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "285d79eb-2c84-5304-a013-d3f1506cc8a1",
+                    "leftValue": "={{ $json.respuesta }}",
+                    "rightValue": "confirma",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Confirma"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ff5aa4fe-7212-5a7c-8019-c30f210b22d0",
+                    "leftValue": "={{ $json.respuesta }}",
+                    "rightValue": "cancela",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Cancela"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "168842dd-d691-5544-83c7-a3d5f942b530",
+                    "leftValue": "={{ $json.respuesta }}",
+                    "rightValue": "reprograma",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Reprograma"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Sin respuesta"
+        }
+      },
+      "id": "08990aad-90ec-56b8-81ec-3d840133ee2f",
+      "name": "¿Qué responde?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        3100,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// RF-08: si confirma (o no responde) la cita sigue en pie.\nconst estado = $json.respuesta === 'confirma' ? 'Confirmada' : 'Agendada sin respuesta';\nreturn {\n  json: {\n    ...$json,\n    estado,\n    cita: { ...$json.cita, estado },\n    historial: [...$json.historial, { fecha: new Date().toISOString(), paso: 'Cita ' + estado.toLowerCase(), actor: 'n8n' }],\n  },\n};"
+      },
+      "id": "202b5ad9-2ad9-5bf7-b9d1-e053d78c3e17",
+      "name": "Cita confirmada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3360,
+        -480
+      ],
+      "notes": "RF-08",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// RPA con datos de ejemplo. En producción, este paso lo hace el bot por pantalla en el portal o la agenda.\n// RF-08: simula al bot cancelando la cita y liberando el cupo en la agenda.\nconst s = $json;\nreturn {\n  json: {\n    ...s,\n    cita: { ...s.cita, estado: 'Cancelada' },\n    estado: 'Cancelada',\n    historial: [...s.historial, { fecha: new Date().toISOString(), paso: 'Cita cancelada y cupo liberado en la agenda', actor: 'Bot RPA' }],\n  },\n};"
+      },
+      "id": "2b720743-dc90-5a38-8c9b-aaac2e71650a",
+      "name": "Cancelar cita y liberar espacio (RPA)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3360,
+        -240
+      ],
+      "notes": "RF-08 · RPA",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// RF-08: guarda la cita actual para liberarla y vuelve a buscar espacio (RF-04).\nreturn {\n  json: {\n    ...$json,\n    citaAnterior: $json.cita,\n    estado: 'Reprogramando',\n    historial: [...$json.historial, { fecha: new Date().toISOString(), paso: 'El paciente pide otra fecha', actor: 'n8n' }],\n  },\n};"
+      },
+      "id": "5c56b218-3bdd-5efe-909b-d98d7a90f635",
+      "name": "Reprogramar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3360,
+        0
+      ],
+      "notes": "RF-08 → vuelve a RF-04",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// RF-09 y RNF-02: el auxiliar recibe el caso con los datos ya extraídos y el motivo.\n// Si la IA o el bot fallan después de 3 intentos, la solicitud también llega aquí y no se pierde.\nlet sol = $json;\nif (!sol.idSolicitud) {\n  try { sol = $('Unir datos extraídos').first().json; } catch (e) { sol = $('Registrar solicitud').first().json; }\n}\nconst error = $json.error ? ($json.error.message || String($json.error)) : '';\nconst motivo = sol.motivoExcepcion || (error ? 'Falla técnica: ' + error : 'Revisar el caso');\nreturn {\n  json: {\n    ...sol,\n    estado: 'Excepción',\n    motivoExcepcion: motivo,\n    asignadoA: 'Auxiliar de agendamiento',\n    historial: [...(sol.historial || []), { fecha: new Date().toISOString(), paso: 'Pasa al auxiliar: ' + motivo, actor: 'n8n' }],\n  },\n};"
+      },
+      "id": "3005ed86-87fa-5363-802b-4b14f842ffe4",
+      "name": "Pasar excepción al auxiliar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2220,
+        320
+      ],
+      "notes": "RF-09 · RNF-02",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// RNF-05: registro final de la solicitud con su estado y quién actuó en cada paso.\n// Simulado: en producción este nodo es un Postgres que guarda el registro en la BD.\nreturn {\n  json: {\n    idSolicitud: $json.idSolicitud,\n    estado: $json.estado,\n    canal: $json.canalOrigen,\n    paciente: $json.paciente,\n    especialidad: $json.especialidad,\n    urgencia: $json.urgencia,\n    cita: $json.cita ?? null,\n    motivoExcepcion: $json.motivoExcepcion || '',\n    historial: $json.historial,\n  },\n};"
+      },
+      "id": "2a31b16b-7131-5614-85ed-fb7871b8d816",
+      "name": "Guardar trazabilidad",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3620,
+        -240
+      ],
+      "notes": "RNF-05 · BD (simulada)",
+      "notesInFlow": true
+    }
+  ],
+  "connections": {
+    "Probar con un ejemplo": {
+      "main": [
+        [
+          {
+            "node": "Ejemplo de solicitud",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejemplo de solicitud": {
+      "main": [
+        [
+          {
+            "node": "Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recibir solicitud": {
+      "main": [
+        [
+          {
+            "node": "Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuración": {
+      "main": [
+        [
+          {
+            "node": "Registrar solicitud",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar solicitud": {
+      "main": [
+        [
+          {
+            "node": "Extraer datos (IA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer datos (IA)": {
+      "main": [
+        [
+          {
+            "node": "Unir datos extraídos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pasar excepción al auxiliar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extraer datos (IA)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unir datos extraídos": {
+      "main": [
+        [
+          {
+            "node": "Verificar paciente en portal EPS (RPA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Activo y autorizado?": {
+      "main": [
+        [
+          {
+            "node": "Buscar espacio en la agenda (RPA)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pasar excepción al auxiliar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay espacio?": {
+      "main": [
+        [
+          {
+            "node": "Registrar cita (RPA)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pasar excepción al auxiliar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar confirmación": {
+      "main": [
+        [
+          {
+            "node": "Esperar hasta 24 h antes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar hasta 24 h antes": {
+      "main": [
+        [
+          {
+            "node": "Enviar recordatorio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar recordatorio": {
+      "main": [
+        [
+          {
+            "node": "Esperar respuesta del paciente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar respuesta del paciente": {
+      "main": [
+        [
+          {
+            "node": "Leer respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer respuesta": {
+      "main": [
+        [
+          {
+            "node": "¿Qué responde?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Qué responde?": {
+      "main": [
+        [
+          {
+            "node": "Cita confirmada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cancelar cita y liberar espacio (RPA)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reprogramar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cita confirmada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cita confirmada": {
+      "main": [
+        [
+          {
+            "node": "Guardar trazabilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reprogramar": {
+      "main": [
+        [
+          {
+            "node": "Buscar espacio en la agenda (RPA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pasar excepción al auxiliar": {
+      "main": [
+        [
+          {
+            "node": "Guardar trazabilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar paciente en portal EPS (RPA)": {
+      "main": [
+        [
+          {
+            "node": "¿Activo y autorizado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar espacio en la agenda (RPA)": {
+      "main": [
+        [
+          {
+            "node": "¿Hay espacio?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar cita (RPA)": {
+      "main": [
+        [
+          {
+            "node": "Enviar confirmación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cancelar cita y liberar espacio (RPA)": {
+      "main": [
+        [
+          {
+            "node": "Guardar trazabilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false
+}
