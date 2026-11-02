@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="2150" height="820" viewBox="130 60 2150 820">
+  <defs>
+    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 1 2 L 10 6 L 1 10 z" fill="#334155"/>
+    </marker>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="1.5" stdDeviation="2" flood-color="#0F172A" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+  <rect x="130" y="60" width="2150" height="820" fill="#FFFFFF"/>
+  <rect x="150" y="80" width="2110" height="780" fill="#FFFFFF" stroke="#1E293B" stroke-width="2"/>
+  <rect x="150" y="80" width="30" height="780" fill="#1E293B" stroke="#1E293B" stroke-width="1.5"/>
+  <text x="169" y="470.0" fill="#FFFFFF" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="600" text-anchor="middle" transform="rotate(-90 169 470.0)">IPS – Proceso Ejecutable de Asignación de Citas (Bonita BPMS)</text>
+  <rect x="180" y="80" width="2080" height="150" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.2"/>
+  <rect x="180" y="80" width="32" height="150" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.2"/>
+  <rect x="180" y="80" width="4" height="150" fill="#0284C7"/>
+  <text x="200" y="155.0" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle" transform="rotate(-90 200 155.0)">Paciente (Portal / WhatsApp)</text>
+  <rect x="180" y="230" width="2080" height="160" fill="#FFFBEB" stroke="#94A3B8" stroke-width="1.2"/>
+  <rect x="180" y="230" width="32" height="160" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.2"/>
+  <rect x="180" y="230" width="4" height="160" fill="#D97706"/>
+  <text x="200" y="310.0" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle" transform="rotate(-90 200 310.0)">Auxiliar de agendamiento (Excepciones)</text>
+  <rect x="180" y="390" width="2080" height="150" fill="#F5F3FF" stroke="#94A3B8" stroke-width="1.2"/>
+  <rect x="180" y="390" width="32" height="150" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.2"/>
+  <rect x="180" y="390" width="4" height="150" fill="#7C3AED"/>
+  <text x="200" y="465.0" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle" transform="rotate(-90 200 465.0)">Motor Bonita BPMS (Orquestación)</text>
+  <rect x="180" y="540" width="2080" height="140" fill="#ECFDF5" stroke="#94A3B8" stroke-width="1.2"/>
+  <rect x="180" y="540" width="32" height="140" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.2"/>
+  <rect x="180" y="540" width="4" height="140" fill="#059669"/>
+  <text x="200" y="610.0" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle" transform="rotate(-90 200 610.0)">Componente IA (Conector REST LLM)</text>
+  <rect x="180" y="680" width="2080" height="180" fill="#EFF6FF" stroke="#94A3B8" stroke-width="1.2"/>
+  <rect x="180" y="680" width="32" height="180" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.2"/>
+  <rect x="180" y="680" width="4" height="180" fill="#2563EB"/>
+  <text x="200" y="770.0" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle" transform="rotate(-90 200 770.0)">Bot RPA y Agenda IPS (Conectores)</text>
+  <path d="M 268 155 L 385 155 L 385 570" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M 450 610 L 530 610 L 530 490" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M 555 465 L 660 465 L 660 720" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <rect x="596" y="442" width="24" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.88"/>
+  <text x="608.0" y="454" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Sí</text>
+  <path d="M 530 440 L 530 255 L 1140 255 L 1140 285" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <line x1="526" y1="434" x2="534" y2="426" stroke="#334155" stroke-width="2"/>
+  <rect x="538" y="236" width="139" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.88"/>
+  <text x="607.5" y="248" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">No (Datos incompletos)</text>
+  <path d="M 725 760 L 810 760 L 810 490" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M 835 465 L 910 465 L 910 735" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <rect x="866" y="442" width="24" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.88"/>
+  <text x="878.0" y="454" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Sí</text>
+  <path d="M 810 440 L 810 310 L 1115 310" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <line x1="806" y1="434" x2="814" y2="426" stroke="#334155" stroke-width="2"/>
+  <rect x="820" y="289" width="124" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.88"/>
+  <text x="882.0" y="301" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">No (Sin autorización)</text>
+  <path d="M 935 760 L 965 760" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M 1095 760 L 1140 760 L 1140 490" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M 1165 465 L 1270 465 L 1270 720" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <rect x="1208" y="442" width="24" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.88"/>
+  <text x="1220.0" y="454" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Sí</text>
+  <path d="M 1140 440 L 1140 335" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <line x1="1136" y1="434" x2="1144" y2="426" stroke="#334155" stroke-width="2"/>
+  <rect x="1146" y="379" width="26" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.88"/>
+  <text x="1159.0" y="391" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">No</text>
+  <path d="M 1165 310 L 1205 310" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M 1335 310 L 1395 310" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M 1420 285 L 1420 173" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <line x1="1416" y1="279" x2="1424" y2="271" stroke="#334155" stroke-width="2"/>
+  <rect x="1426" y="224" width="26" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.88"/>
+  <text x="1439.0" y="236" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">No</text>
+  <path d="M 1420 335 L 1420 440" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <rect x="1426" y="379" width="24" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.88"/>
+  <text x="1438.0" y="391" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Sí</text>
+  <path d="M 1335 760 L 1420 760 L 1420 490" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M 1445 465 L 1485 465" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M 1615 465 L 1652 465" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M 1688 465 L 1730 465" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M 1795 425 L 1795 195" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M 1860 155 L 1960 155 L 1960 440" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M 1985 465 L 2172 465" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <line x1="1991" y1="469" x2="1999" y2="461" stroke="#334155" stroke-width="2"/>
+  <rect x="2053" y="442" width="62" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.88"/>
+  <text x="2084.0" y="454" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Confirma</text>
+  <path d="M 1960 490 L 1960 760 L 1995 760" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <rect x="1966" y="609" width="56" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.88"/>
+  <text x="1994.0" y="621" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Cancela</text>
+  <path d="M 1935 465 L 1900 465 L 1900 835 L 910 835 L 910 785" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <rect x="1378" y="814" width="82" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.88"/>
+  <text x="1419.0" y="826" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Reprograma</text>
+  <path d="M 2125 760 L 2172 760" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <circle cx="250.0" cy="155.0" r="18" fill="#ECFDF5" stroke="#16A34A" stroke-width="2.5" filter="url(#shadow)"/>
+  <text x="250.0" y="189" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Solicitud</text>
+  <text x="250.0" y="202" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">recibida</text>
+  <circle cx="1420.0" cy="155.0" r="18" fill="#FEF2F2" stroke="#DC2626" stroke-width="4" filter="url(#shadow)"/>
+  <text x="1420.0" y="113" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Solicitud</text>
+  <text x="1420.0" y="126" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">cerrada sin cita</text>
+  <circle cx="2190.0" cy="465.0" r="18" fill="#ECFDF5" stroke="#15803D" stroke-width="4" filter="url(#shadow)"/>
+  <text x="2190.0" y="499" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Cita confirmada</text>
+  <circle cx="2190.0" cy="760.0" r="18" fill="#FEF2F2" stroke="#DC2626" stroke-width="4" filter="url(#shadow)"/>
+  <text x="2190.5" y="794" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Cita cancelada</text>
+  <rect x="320" y="570" width="130" height="80" rx="10" ry="10" fill="#FFFFFF" stroke="#2563EB" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="326" y="576" width="20" height="20" rx="5" fill="#DBEAFE"/>
+  <circle cx="336" cy="586" r="3.8" fill="none" stroke="#1D4ED8" stroke-width="1.6"/>
+  <path d="M 336 580 L 336 581.8 M 336 590.2 L 336 592 M 330 586 L 331.8 586 M 340.2 586 L 342 586 M 331.8 581.8 L 333 583 M 339 589 L 340.2 590.2 M 340.2 581.8 L 339 583 M 333 589 L 331.8 590.2" stroke="#1D4ED8" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="385.0" y="608.0" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">Extraer datos de</text>
+  <text x="385.0" y="622.5" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">solicitud (IA)</text>
+  <rect x="595" y="720" width="130" height="80" rx="10" ry="10" fill="#FFFFFF" stroke="#2563EB" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="601" y="726" width="20" height="20" rx="5" fill="#DBEAFE"/>
+  <circle cx="611" cy="736" r="3.8" fill="none" stroke="#1D4ED8" stroke-width="1.6"/>
+  <path d="M 611 730 L 611 731.8 M 611 740.2 L 611 742 M 605 736 L 606.8 736 M 615.2 736 L 617 736 M 606.8 731.8 L 608 733 M 614 739 L 615.2 740.2 M 615.2 731.8 L 614 733 M 608 739 L 606.8 740.2" stroke="#1D4ED8" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="660.0" y="751.0" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">Verificar paciente</text>
+  <text x="660.0" y="765.5" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">en portal EPS</text>
+  <text x="660.0" y="780.0" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">(RPA)</text>
+  <rect x="965" y="720" width="130" height="80" rx="10" ry="10" fill="#FFFFFF" stroke="#2563EB" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="971" y="726" width="20" height="20" rx="5" fill="#DBEAFE"/>
+  <circle cx="981" cy="736" r="3.8" fill="none" stroke="#1D4ED8" stroke-width="1.6"/>
+  <path d="M 981 730 L 981 731.8 M 981 740.2 L 981 742 M 975 736 L 976.8 736 M 985.2 736 L 987 736 M 976.8 731.8 L 978 733 M 984 739 L 985.2 740.2 M 985.2 731.8 L 984 733 M 978 739 L 976.8 740.2" stroke="#1D4ED8" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="1030.0" y="758.0" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">Buscar cupo en</text>
+  <text x="1030.0" y="772.5" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">agenda IPS</text>
+  <rect x="1205" y="270" width="130" height="80" rx="10" ry="10" fill="#FFFFFF" stroke="#0284C7" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="1211" y="276" width="20" height="20" rx="5" fill="#E0F2FE"/>
+  <circle cx="1221" cy="283" r="3.3" fill="none" stroke="#0369A1" stroke-width="1.5"/>
+  <path d="M 1215.5 292.5 C 1215.5 288.5, 1226.5 288.5, 1226.5 292.5" fill="none" stroke="#0369A1" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="1270.0" y="308.0" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">Atender excepción</text>
+  <text x="1270.0" y="322.5" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">con el paciente</text>
+  <rect x="1205" y="720" width="130" height="80" rx="10" ry="10" fill="#FFFFFF" stroke="#2563EB" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="1211" y="726" width="20" height="20" rx="5" fill="#DBEAFE"/>
+  <circle cx="1221" cy="736" r="3.8" fill="none" stroke="#1D4ED8" stroke-width="1.6"/>
+  <path d="M 1221 730 L 1221 731.8 M 1221 740.2 L 1221 742 M 1215 736 L 1216.8 736 M 1225.2 736 L 1227 736 M 1216.8 731.8 L 1218 733 M 1224 739 L 1225.2 740.2 M 1225.2 731.8 L 1224 733 M 1218 739 L 1216.8 740.2" stroke="#1D4ED8" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="1270.0" y="758.0" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">Registrar cita en</text>
+  <text x="1270.0" y="772.5" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">sistema IPS y BDM</text>
+  <rect x="1485" y="425" width="130" height="80" rx="10" ry="10" fill="#FFFFFF" stroke="#2563EB" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="1491" y="431" width="20" height="20" rx="5" fill="#DBEAFE"/>
+  <circle cx="1501" cy="441" r="3.8" fill="none" stroke="#1D4ED8" stroke-width="1.6"/>
+  <path d="M 1501 435 L 1501 436.8 M 1501 445.2 L 1501 447 M 1495 441 L 1496.8 441 M 1505.2 441 L 1507 441 M 1496.8 436.8 L 1498 438 M 1504 444 L 1505.2 445.2 M 1505.2 436.8 L 1504 438 M 1498 444 L 1496.8 445.2" stroke="#1D4ED8" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="1550.0" y="456.0" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">Enviar</text>
+  <text x="1550.0" y="470.5" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">confirmación de</text>
+  <text x="1550.0" y="485.0" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">cita</text>
+  <circle cx="1670.0" cy="465.0" r="18" fill="#FFFBEB" stroke="#D97706" stroke-width="2" filter="url(#shadow)"/>
+  <circle cx="1670.0" cy="465.0" r="14.5" fill="none" stroke="#D97706" stroke-width="1.4"/>
+  <circle cx="1670.0" cy="465.0" r="9" fill="none" stroke="#B45309" stroke-width="1.3"/>
+  <path d="M 1670.0 459.0 L 1670.0 465.0 L 1674.5 467.5" fill="none" stroke="#B45309" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="1670.0" y="499" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">24 h antes de la</text>
+  <text x="1670.0" y="512" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">cita</text>
+  <rect x="1730" y="425" width="130" height="80" rx="10" ry="10" fill="#FFFFFF" stroke="#2563EB" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="1736" y="431" width="20" height="20" rx="5" fill="#DBEAFE"/>
+  <circle cx="1746" cy="441" r="3.8" fill="none" stroke="#1D4ED8" stroke-width="1.6"/>
+  <path d="M 1746 435 L 1746 436.8 M 1746 445.2 L 1746 447 M 1740 441 L 1741.8 441 M 1750.2 441 L 1752 441 M 1741.8 436.8 L 1743 438 M 1749 444 L 1750.2 445.2 M 1750.2 436.8 L 1749 438 M 1743 444 L 1741.8 445.2" stroke="#1D4ED8" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="1795.0" y="456.0" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">Enviar</text>
+  <text x="1795.0" y="470.5" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">recordatorio de</text>
+  <text x="1795.0" y="485.0" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">asistencia</text>
+  <rect x="1730" y="115" width="130" height="80" rx="10" ry="10" fill="#FFFFFF" stroke="#0284C7" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="1736" y="121" width="20" height="20" rx="5" fill="#E0F2FE"/>
+  <circle cx="1746" cy="128" r="3.3" fill="none" stroke="#0369A1" stroke-width="1.5"/>
+  <path d="M 1740.5 137.5 C 1740.5 133.5, 1751.5 133.5, 1751.5 137.5" fill="none" stroke="#0369A1" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="1795.0" y="153.0" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">Responder</text>
+  <text x="1795.0" y="167.5" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">recordatorio</text>
+  <rect x="1995" y="720" width="130" height="80" rx="10" ry="10" fill="#FFFFFF" stroke="#2563EB" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="2001" y="726" width="20" height="20" rx="5" fill="#DBEAFE"/>
+  <circle cx="2011" cy="736" r="3.8" fill="none" stroke="#1D4ED8" stroke-width="1.6"/>
+  <path d="M 2011 730 L 2011 731.8 M 2011 740.2 L 2011 742 M 2005 736 L 2006.8 736 M 2015.2 736 L 2017 736 M 2006.8 731.8 L 2008 733 M 2014 739 L 2015.2 740.2 M 2015.2 731.8 L 2014 733 M 2008 739 L 2006.8 740.2" stroke="#1D4ED8" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="2060.0" y="758.0" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">Cancelar cita y</text>
+  <text x="2060.0" y="772.5" fill="#0F172A" font-family="Segoe UI, Arial, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">liberar cupo</text>
+  <polygon points="530.0,440 555,465.0 530.0,490 505,465.0" fill="#FEFCE8" stroke="#CA8A04" stroke-width="2.2" filter="url(#shadow)"/>
+  <path d="M 523.0 458.0 L 537.0 472.0 M 537.0 458.0 L 523.0 472.0" stroke="#CA8A04" stroke-width="2.4" stroke-linecap="round"/>
+  <text x="487.5" y="505" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">¿Datos</text>
+  <text x="487.5" y="518" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">completos?</text>
+  <polygon points="810.0,440 835,465.0 810.0,490 785,465.0" fill="#FEFCE8" stroke="#CA8A04" stroke-width="2.2" filter="url(#shadow)"/>
+  <path d="M 803.0 458.0 L 817.0 472.0 M 817.0 458.0 L 803.0 472.0" stroke="#CA8A04" stroke-width="2.4" stroke-linecap="round"/>
+  <text x="767.5" y="505" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">¿Activo y</text>
+  <text x="767.5" y="518" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">autorizado?</text>
+  <polygon points="910.0,735 935,760.0 910.0,785 885,760.0" fill="#F8FAFC" stroke="#64748B" stroke-width="2.2" filter="url(#shadow)"/>
+  <path d="M 903.0 753.0 L 917.0 767.0 M 917.0 753.0 L 903.0 767.0" stroke="#64748B" stroke-width="2.4" stroke-linecap="round"/>
+  <polygon points="1140.0,440 1165,465.0 1140.0,490 1115,465.0" fill="#FEFCE8" stroke="#CA8A04" stroke-width="2.2" filter="url(#shadow)"/>
+  <path d="M 1133.0 458.0 L 1147.0 472.0 M 1147.0 458.0 L 1133.0 472.0" stroke="#CA8A04" stroke-width="2.4" stroke-linecap="round"/>
+  <text x="1092.5" y="505" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">¿Hay cupo?</text>
+  <polygon points="1140.0,285 1165,310.0 1140.0,335 1115,310.0" fill="#F8FAFC" stroke="#64748B" stroke-width="2.2" filter="url(#shadow)"/>
+  <path d="M 1133.0 303.0 L 1147.0 317.0 M 1147.0 303.0 L 1133.0 317.0" stroke="#64748B" stroke-width="2.4" stroke-linecap="round"/>
+  <polygon points="1420.0,285 1445,310.0 1420.0,335 1395,310.0" fill="#FEFCE8" stroke="#CA8A04" stroke-width="2.2" filter="url(#shadow)"/>
+  <path d="M 1413.0 303.0 L 1427.0 317.0 M 1427.0 303.0 L 1413.0 317.0" stroke="#CA8A04" stroke-width="2.4" stroke-linecap="round"/>
+  <text x="1487.5" y="313" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">¿Agendada?</text>
+  <polygon points="1420.0,440 1445,465.0 1420.0,490 1395,465.0" fill="#F8FAFC" stroke="#64748B" stroke-width="2.2" filter="url(#shadow)"/>
+  <path d="M 1413.0 458.0 L 1427.0 472.0 M 1427.0 458.0 L 1413.0 472.0" stroke="#64748B" stroke-width="2.4" stroke-linecap="round"/>
+  <polygon points="1960.0,440 1985,465.0 1960.0,490 1935,465.0" fill="#FEFCE8" stroke="#CA8A04" stroke-width="2.2" filter="url(#shadow)"/>
+  <path d="M 1953.0 458.0 L 1967.0 472.0 M 1967.0 458.0 L 1953.0 472.0" stroke="#CA8A04" stroke-width="2.4" stroke-linecap="round"/>
+  <text x="2030.0" y="505" fill="#1E293B" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle">¿Respuesta?</text>
+</svg>

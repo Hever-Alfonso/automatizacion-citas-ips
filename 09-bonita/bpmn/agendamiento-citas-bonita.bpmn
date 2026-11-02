@@ -1,0 +1,466 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  id="Definitions_Bonita_IPS"
+                  targetNamespace="http://bonitasoft.com/ips/agendamiento"
+                  exporter="Bonita BPMN Generator - EAFIT"
+                  exporterVersion="1.0">
+  <bpmn:collaboration id="Collab_Bonita_IPS">
+    <bpmn:participant id="Participant_IPS_Bonita" name="IPS – Proceso Ejecutable de Asignación de Citas (Bonita BPMS)" processRef="Process_AgendamientoCitasIPS" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_AgendamientoCitasIPS" name="Agendamiento Automatizado de Citas IPS" isExecutable="true">
+    <bpmn:documentation>Proceso ejecutable BPMS en Bonita Studio para la automatización de asignación, confirmación, recordatorio, reprogramación y cancelación de citas médicas en una IPS de consulta externa (Cumplimiento Ley 1581 de 2012).</bpmn:documentation>
+    <bpmn:laneSet id="LaneSet_Bonita_IPS">
+      <bpmn:lane id="Lane_Paciente" name="Paciente (Portal / WhatsApp)">
+        <bpmn:flowNodeRef>Start_Solicitud</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Excepcion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Responder</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Auxiliar" name="Auxiliar de agendamiento (Excepciones)">
+        <bpmn:flowNodeRef>GW_JoinExcepcion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Excepcion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_ResolucionAuxiliar</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Orquestador" name="Motor Bonita BPMS (Orquestación)">
+        <bpmn:flowNodeRef>GW_DatosIA</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_EPS</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Espacio</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_JoinConfirmar</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Confirmar</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Timer_24hAntes</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Recordatorio</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Respuesta</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Confirmada</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_IA" name="Componente IA (Conector REST LLM)">
+        <bpmn:flowNodeRef>Task_IA</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_RPA" name="Bot RPA y Agenda IPS (Conectores)">
+        <bpmn:flowNodeRef>Task_VerificarEPS</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_JoinBusqueda</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_BuscarEspacio</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Registrar</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Cancelar</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Cancelada</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="Start_Solicitud" name="Solicitud recibida">
+      <bpmn:documentation>Inicio del proceso mediante formulario de solicitud en Portal Bonita o invocación vía REST API desde webhook omnicanal (WhatsApp/Correo). Valida consentimiento Ley 1581.</bpmn:documentation>
+      <bpmn:outgoing>F01</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="End_Excepcion" name="Solicitud cerrada sin cita">
+      <bpmn:documentation>Fin del caso cuando la excepción no permite asignar cita (ej. afiliación suspendida o paciente desiste).</bpmn:documentation>
+      <bpmn:incoming>F_Aux_Cerrado</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="End_Confirmada" name="Cita confirmada">
+      <bpmn:documentation>Cita confirmada exitosamente por el paciente tras el recordatorio 24 h antes.</bpmn:documentation>
+      <bpmn:incoming>F_Resp_Confirma</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="End_Cancelada" name="Cita cancelada">
+      <bpmn:documentation>Cita cancelada oportunamente y cupo liberado en la agenda médica de la IPS.</bpmn:documentation>
+      <bpmn:incoming>F18</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="Task_IA" name="Extraer datos de solicitud (IA)">
+      <bpmn:documentation>Conector REST hacia servicio LLM para extraer tipo/número de documento, EPS, especialidad requerida, urgencia y puntaje de confianza.</bpmn:documentation>
+      <bpmn:incoming>F01</bpmn:incoming>
+      <bpmn:outgoing>F02</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_VerificarEPS" name="Verificar paciente en portal EPS (RPA)">
+      <bpmn:documentation>Conector REST/Webhook que dispara el Bot RPA para consultar estado de afiliación activa y vigencia de autorización en el portal web de la EPS.</bpmn:documentation>
+      <bpmn:incoming>F_Datos_Si</bpmn:incoming>
+      <bpmn:outgoing>F04</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_BuscarEspacio" name="Buscar cupo en agenda IPS">
+      <bpmn:documentation>Consulta BDM / Conector JDBC sobre sistema de agenda médica IPS para localizar el próximo cupo disponible en la especialidad solicitada evitando cruce de citas.</bpmn:documentation>
+      <bpmn:incoming>F_ToBuscar</bpmn:incoming>
+      <bpmn:outgoing>F07</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="Task_Excepcion" name="Atender excepción con el paciente">
+      <bpmn:documentation>Tarea Humana asignada al rol Auxiliar de Agendamiento en Bonita Portal. Permite completar datos faltantes, gestionar autorizaciones especiales o asignar cupo manual.</bpmn:documentation>
+      <bpmn:incoming>F_ToExcepcion</bpmn:incoming>
+      <bpmn:outgoing>F10</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Task_Registrar" name="Registrar cita en sistema IPS y BDM">
+      <bpmn:documentation>Persiste la CitaMedica en el BDM de Bonita, marca el CupoAgenda como ocupado y sincroniza mediante RPA/JDBC con el sistema legado de la IPS.</bpmn:documentation>
+      <bpmn:incoming>F_Espacio_Si</bpmn:incoming>
+      <bpmn:outgoing>F11</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_Confirmar" name="Enviar confirmación de cita">
+      <bpmn:documentation>Conector REST / Correo que envía inmediatamente los datos de confirmación de la cita (fecha, hora, médico, sede y recomendaciones) por el canal del paciente.</bpmn:documentation>
+      <bpmn:incoming>F_ToConfirmar</bpmn:incoming>
+      <bpmn:outgoing>F12</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:intermediateCatchEvent id="Timer_24hAntes" name="24 h antes de la cita">
+      <bpmn:documentation>Evento Intermedio Temporizador (Timer Catch Event) calculado dinámicamente como fechaHoraCita menos 24 horas.</bpmn:documentation>
+      <bpmn:incoming>F12</bpmn:incoming>
+      <bpmn:outgoing>F12b</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerDef_Timer_24hAntes">
+        <bpmn:timeDate xsi:type="bpmn:tFormalExpression">fechaRecordatorio</bpmn:timeDate>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:serviceTask id="Task_Recordatorio" name="Enviar recordatorio de asistencia">
+      <bpmn:documentation>Envía notificación interactiva 24 h antes solicitando al paciente confirmar asistencia, reprogramar o cancelar la cita.</bpmn:documentation>
+      <bpmn:incoming>F12b</bpmn:incoming>
+      <bpmn:outgoing>F13</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="Task_Responder" name="Responder recordatorio">
+      <bpmn:documentation>Tarea de usuario (Portal Paciente o completada automáticamente vía Bonita REST API cuando el paciente responde en WhatsApp): CONFIRMAR, REPROGRAMAR o CANCELAR.</bpmn:documentation>
+      <bpmn:incoming>F13</bpmn:incoming>
+      <bpmn:outgoing>F14</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Task_Cancelar" name="Cancelar cita y liberar cupo">
+      <bpmn:documentation>Actualiza estado de CitaMedica a CANCELADA, libera el CupoAgenda en BDM y ejecuta el Bot RPA para liberar el espacio en el sistema de la IPS.</bpmn:documentation>
+      <bpmn:incoming>F_Resp_Cancela</bpmn:incoming>
+      <bpmn:outgoing>F18</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="GW_DatosIA" name="¿Datos completos?" default="F_Datos_No">
+      <bpmn:incoming>F02</bpmn:incoming>
+      <bpmn:outgoing>F_Datos_Si</bpmn:outgoing>
+      <bpmn:outgoing>F_Datos_No</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_EPS" name="¿Activo y autorizado?" default="F_EPS_No">
+      <bpmn:incoming>F04</bpmn:incoming>
+      <bpmn:outgoing>F_EPS_Si</bpmn:outgoing>
+      <bpmn:outgoing>F_EPS_No</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_JoinBusqueda">
+      <bpmn:incoming>F_EPS_Si</bpmn:incoming>
+      <bpmn:incoming>F_Resp_Reprograma</bpmn:incoming>
+      <bpmn:outgoing>F_ToBuscar</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_Espacio" name="¿Hay cupo?" default="F_Espacio_No">
+      <bpmn:incoming>F07</bpmn:incoming>
+      <bpmn:outgoing>F_Espacio_Si</bpmn:outgoing>
+      <bpmn:outgoing>F_Espacio_No</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_JoinExcepcion">
+      <bpmn:incoming>F_Datos_No</bpmn:incoming>
+      <bpmn:incoming>F_EPS_No</bpmn:incoming>
+      <bpmn:incoming>F_Espacio_No</bpmn:incoming>
+      <bpmn:outgoing>F_ToExcepcion</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_ResolucionAuxiliar" name="¿Agendada?" default="F_Aux_Cerrado">
+      <bpmn:incoming>F10</bpmn:incoming>
+      <bpmn:outgoing>F_Aux_Cerrado</bpmn:outgoing>
+      <bpmn:outgoing>F_Aux_Agendada</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_JoinConfirmar">
+      <bpmn:incoming>F_Aux_Agendada</bpmn:incoming>
+      <bpmn:incoming>F11</bpmn:incoming>
+      <bpmn:outgoing>F_ToConfirmar</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_Respuesta" name="¿Respuesta?" default="F_Resp_Confirma">
+      <bpmn:incoming>F14</bpmn:incoming>
+      <bpmn:outgoing>F_Resp_Confirma</bpmn:outgoing>
+      <bpmn:outgoing>F_Resp_Cancela</bpmn:outgoing>
+      <bpmn:outgoing>F_Resp_Reprograma</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="F01" sourceRef="Start_Solicitud" targetRef="Task_IA" />
+    <bpmn:sequenceFlow id="F02" sourceRef="Task_IA" targetRef="GW_DatosIA" />
+    <bpmn:sequenceFlow id="F_Datos_Si" name="Sí" sourceRef="GW_DatosIA" targetRef="Task_VerificarEPS">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression"><![CDATA[solicitudCita.datosCompletos == true && solicitudCita.confianzaIA >= 0.80]]></bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F_Datos_No" name="No (Datos incompletos)" sourceRef="GW_DatosIA" targetRef="GW_JoinExcepcion" />
+    <bpmn:sequenceFlow id="F04" sourceRef="Task_VerificarEPS" targetRef="GW_EPS" />
+    <bpmn:sequenceFlow id="F_EPS_Si" name="Sí" sourceRef="GW_EPS" targetRef="GW_JoinBusqueda">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression"><![CDATA[paciente.activoEPS == true && solicitudCita.autorizacionVigente == true]]></bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F_EPS_No" name="No (Sin autorización)" sourceRef="GW_EPS" targetRef="GW_JoinExcepcion" />
+    <bpmn:sequenceFlow id="F_ToBuscar" sourceRef="GW_JoinBusqueda" targetRef="Task_BuscarEspacio" />
+    <bpmn:sequenceFlow id="F07" sourceRef="Task_BuscarEspacio" targetRef="GW_Espacio" />
+    <bpmn:sequenceFlow id="F_Espacio_Si" name="Sí" sourceRef="GW_Espacio" targetRef="Task_Registrar">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression"><![CDATA[cupoDisponible == true]]></bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F_Espacio_No" name="No" sourceRef="GW_Espacio" targetRef="GW_JoinExcepcion" />
+    <bpmn:sequenceFlow id="F_ToExcepcion" sourceRef="GW_JoinExcepcion" targetRef="Task_Excepcion" />
+    <bpmn:sequenceFlow id="F10" sourceRef="Task_Excepcion" targetRef="GW_ResolucionAuxiliar" />
+    <bpmn:sequenceFlow id="F_Aux_Cerrado" name="No" sourceRef="GW_ResolucionAuxiliar" targetRef="End_Excepcion" />
+    <bpmn:sequenceFlow id="F_Aux_Agendada" name="Sí" sourceRef="GW_ResolucionAuxiliar" targetRef="GW_JoinConfirmar">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression"><![CDATA[citaMedica != null && citaMedica.estado == 'AGENDADA']]></bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F11" sourceRef="Task_Registrar" targetRef="GW_JoinConfirmar" />
+    <bpmn:sequenceFlow id="F_ToConfirmar" sourceRef="GW_JoinConfirmar" targetRef="Task_Confirmar" />
+    <bpmn:sequenceFlow id="F12" sourceRef="Task_Confirmar" targetRef="Timer_24hAntes" />
+    <bpmn:sequenceFlow id="F12b" sourceRef="Timer_24hAntes" targetRef="Task_Recordatorio" />
+    <bpmn:sequenceFlow id="F13" sourceRef="Task_Recordatorio" targetRef="Task_Responder" />
+    <bpmn:sequenceFlow id="F14" sourceRef="Task_Responder" targetRef="GW_Respuesta" />
+    <bpmn:sequenceFlow id="F_Resp_Confirma" name="Confirma" sourceRef="GW_Respuesta" targetRef="End_Confirmada" />
+    <bpmn:sequenceFlow id="F_Resp_Cancela" name="Cancela" sourceRef="GW_Respuesta" targetRef="Task_Cancelar">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression"><![CDATA[respuestaRecordatorio == 'CANCELAR']]></bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F_Resp_Reprograma" name="Reprograma" sourceRef="GW_Respuesta" targetRef="GW_JoinBusqueda">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression"><![CDATA[respuestaRecordatorio == 'REPROGRAMAR']]></bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F18" sourceRef="Task_Cancelar" targetRef="End_Cancelada" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Bonita_IPS">
+    <bpmndi:BPMNPlane id="BPMNPlane_Bonita_IPS" bpmnElement="Collab_Bonita_IPS">
+      <bpmndi:BPMNShape id="Participant_IPS_Bonita_di" bpmnElement="Participant_IPS_Bonita" isHorizontal="true">
+        <dc:Bounds x="150" y="80" width="2110" height="780" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Paciente_di" bpmnElement="Lane_Paciente" isHorizontal="true">
+        <dc:Bounds x="180" y="80" width="2080" height="150" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Auxiliar_di" bpmnElement="Lane_Auxiliar" isHorizontal="true">
+        <dc:Bounds x="180" y="230" width="2080" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Orquestador_di" bpmnElement="Lane_Orquestador" isHorizontal="true">
+        <dc:Bounds x="180" y="390" width="2080" height="150" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_IA_di" bpmnElement="Lane_IA" isHorizontal="true">
+        <dc:Bounds x="180" y="540" width="2080" height="140" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_RPA_di" bpmnElement="Lane_RPA" isHorizontal="true">
+        <dc:Bounds x="180" y="680" width="2080" height="180" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Start_Solicitud_di" bpmnElement="Start_Solicitud">
+        <dc:Bounds x="232" y="137" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="205" y="178" width="90" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Excepcion_di" bpmnElement="End_Excepcion">
+        <dc:Bounds x="1402" y="137" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1360" y="102" width="120" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Confirmada_di" bpmnElement="End_Confirmada">
+        <dc:Bounds x="2172" y="447" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2145" y="488" width="90" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Cancelada_di" bpmnElement="End_Cancelada">
+        <dc:Bounds x="2172" y="742" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2148" y="783" width="85" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_IA_di" bpmnElement="Task_IA">
+        <dc:Bounds x="320" y="570" width="130" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_VerificarEPS_di" bpmnElement="Task_VerificarEPS">
+        <dc:Bounds x="595" y="720" width="130" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_BuscarEspacio_di" bpmnElement="Task_BuscarEspacio">
+        <dc:Bounds x="965" y="720" width="130" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Excepcion_di" bpmnElement="Task_Excepcion">
+        <dc:Bounds x="1205" y="270" width="130" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Registrar_di" bpmnElement="Task_Registrar">
+        <dc:Bounds x="1205" y="720" width="130" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Confirmar_di" bpmnElement="Task_Confirmar">
+        <dc:Bounds x="1485" y="425" width="130" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Timer_24hAntes_di" bpmnElement="Timer_24hAntes">
+        <dc:Bounds x="1652" y="447" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1620" y="488" width="100" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Recordatorio_di" bpmnElement="Task_Recordatorio">
+        <dc:Bounds x="1730" y="425" width="130" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Responder_di" bpmnElement="Task_Responder">
+        <dc:Bounds x="1730" y="115" width="130" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Cancelar_di" bpmnElement="Task_Cancelar">
+        <dc:Bounds x="1995" y="720" width="130" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_DatosIA_di" bpmnElement="GW_DatosIA" isMarkerVisible="true">
+        <dc:Bounds x="505" y="440" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="440" y="494" width="95" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_EPS_di" bpmnElement="GW_EPS" isMarkerVisible="true">
+        <dc:Bounds x="785" y="440" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="720" y="494" width="95" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_JoinBusqueda_di" bpmnElement="GW_JoinBusqueda" isMarkerVisible="true">
+        <dc:Bounds x="885" y="735" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Espacio_di" bpmnElement="GW_Espacio" isMarkerVisible="true">
+        <dc:Bounds x="1115" y="440" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1055" y="494" width="75" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_JoinExcepcion_di" bpmnElement="GW_JoinExcepcion" isMarkerVisible="true">
+        <dc:Bounds x="1115" y="285" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_ResolucionAuxiliar_di" bpmnElement="GW_ResolucionAuxiliar" isMarkerVisible="true">
+        <dc:Bounds x="1395" y="285" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1450" y="302" width="75" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_JoinConfirmar_di" bpmnElement="GW_JoinConfirmar" isMarkerVisible="true">
+        <dc:Bounds x="1395" y="440" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Respuesta_di" bpmnElement="GW_Respuesta" isMarkerVisible="true">
+        <dc:Bounds x="1935" y="440" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1990" y="494" width="80" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="F01_di" bpmnElement="F01">
+        <di:waypoint x="268" y="155" />
+        <di:waypoint x="385" y="155" />
+        <di:waypoint x="385" y="570" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F02_di" bpmnElement="F02">
+        <di:waypoint x="450" y="610" />
+        <di:waypoint x="530" y="610" />
+        <di:waypoint x="530" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_Datos_Si_di" bpmnElement="F_Datos_Si">
+        <di:waypoint x="555" y="465" />
+        <di:waypoint x="660" y="465" />
+        <di:waypoint x="660" y="720" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="598" y="443" width="20" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_Datos_No_di" bpmnElement="F_Datos_No">
+        <di:waypoint x="530" y="440" />
+        <di:waypoint x="530" y="255" />
+        <di:waypoint x="1140" y="255" />
+        <di:waypoint x="1140" y="285" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="540" y="237" width="135" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F04_di" bpmnElement="F04">
+        <di:waypoint x="725" y="760" />
+        <di:waypoint x="810" y="760" />
+        <di:waypoint x="810" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_EPS_Si_di" bpmnElement="F_EPS_Si">
+        <di:waypoint x="835" y="465" />
+        <di:waypoint x="910" y="465" />
+        <di:waypoint x="910" y="735" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="868" y="443" width="20" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_EPS_No_di" bpmnElement="F_EPS_No">
+        <di:waypoint x="810" y="440" />
+        <di:waypoint x="810" y="310" />
+        <di:waypoint x="1115" y="310" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="822" y="290" width="120" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_ToBuscar_di" bpmnElement="F_ToBuscar">
+        <di:waypoint x="935" y="760" />
+        <di:waypoint x="965" y="760" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F07_di" bpmnElement="F07">
+        <di:waypoint x="1095" y="760" />
+        <di:waypoint x="1140" y="760" />
+        <di:waypoint x="1140" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_Espacio_Si_di" bpmnElement="F_Espacio_Si">
+        <di:waypoint x="1165" y="465" />
+        <di:waypoint x="1270" y="465" />
+        <di:waypoint x="1270" y="720" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1210" y="443" width="20" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_Espacio_No_di" bpmnElement="F_Espacio_No">
+        <di:waypoint x="1140" y="440" />
+        <di:waypoint x="1140" y="335" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1148" y="380" width="22" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_ToExcepcion_di" bpmnElement="F_ToExcepcion">
+        <di:waypoint x="1165" y="310" />
+        <di:waypoint x="1205" y="310" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F10_di" bpmnElement="F10">
+        <di:waypoint x="1335" y="310" />
+        <di:waypoint x="1395" y="310" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_Aux_Cerrado_di" bpmnElement="F_Aux_Cerrado">
+        <di:waypoint x="1420" y="285" />
+        <di:waypoint x="1420" y="173" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1428" y="225" width="22" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_Aux_Agendada_di" bpmnElement="F_Aux_Agendada">
+        <di:waypoint x="1420" y="335" />
+        <di:waypoint x="1420" y="440" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1428" y="380" width="20" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F11_di" bpmnElement="F11">
+        <di:waypoint x="1335" y="760" />
+        <di:waypoint x="1420" y="760" />
+        <di:waypoint x="1420" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_ToConfirmar_di" bpmnElement="F_ToConfirmar">
+        <di:waypoint x="1445" y="465" />
+        <di:waypoint x="1485" y="465" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F12_di" bpmnElement="F12">
+        <di:waypoint x="1615" y="465" />
+        <di:waypoint x="1652" y="465" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F12b_di" bpmnElement="F12b">
+        <di:waypoint x="1688" y="465" />
+        <di:waypoint x="1730" y="465" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F13_di" bpmnElement="F13">
+        <di:waypoint x="1795" y="425" />
+        <di:waypoint x="1795" y="195" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F14_di" bpmnElement="F14">
+        <di:waypoint x="1860" y="155" />
+        <di:waypoint x="1960" y="155" />
+        <di:waypoint x="1960" y="440" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_Resp_Confirma_di" bpmnElement="F_Resp_Confirma">
+        <di:waypoint x="1985" y="465" />
+        <di:waypoint x="2172" y="465" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2055" y="443" width="58" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_Resp_Cancela_di" bpmnElement="F_Resp_Cancela">
+        <di:waypoint x="1960" y="490" />
+        <di:waypoint x="1960" y="760" />
+        <di:waypoint x="1995" y="760" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1968" y="610" width="52" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_Resp_Reprograma_di" bpmnElement="F_Resp_Reprograma">
+        <di:waypoint x="1935" y="465" />
+        <di:waypoint x="1900" y="465" />
+        <di:waypoint x="1900" y="835" />
+        <di:waypoint x="910" y="835" />
+        <di:waypoint x="910" y="785" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1380" y="815" width="78" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F18_di" bpmnElement="F18">
+        <di:waypoint x="2125" y="760" />
+        <di:waypoint x="2172" y="760" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<organization:Organization xmlns:organization="http://documentation.bonitasoft.com/organization-xml-schema/1.1">
+    <customUserInfoDefinitions>
+        <customUserInfoDefinition>
+            <name>Sede IPS</name>
+            <description>Sede de atención asignada al funcionario de la IPS</description>
+        </customUserInfoDefinition>
+        <customUserInfoDefinition>
+            <name>Turno</name>
+            <description>Horario operativo del auxiliar de agendamiento</description>
+        </customUserInfoDefinition>
+    </customUserInfoDefinitions>
+
+    <users>
+        <user userName="coordinador.ips">
+            <password encrypted="false">bpm</password>
+            <firstName>Laura</firstName>
+            <lastName>Gómez</lastName>
+            <title>Dra.</title>
+            <jobTitle>Coordinadora Central de Citas IPS</jobTitle>
+            <enabled>true</enabled>
+            <professionalData>
+                <email>coordinacion.citas@ips-salud.co</email>
+                <phoneNumber>+57-604-4440100</phoneNumber>
+                <city>Medellín</city>
+                <country>Colombia</country>
+            </professionalData>
+        </user>
+
+        <user userName="auxiliar1.ips">
+            <password encrypted="false">bpm</password>
+            <firstName>Camila</firstName>
+            <lastName>Restrepo</lastName>
+            <title>Sra.</title>
+            <jobTitle>Auxiliar de Agendamiento - Excepciones</jobTitle>
+            <manager>coordinador.ips</manager>
+            <enabled>true</enabled>
+            <professionalData>
+                <email>auxiliar1@ips-salud.co</email>
+                <city>Medellín</city>
+                <country>Colombia</country>
+            </professionalData>
+        </user>
+
+        <user userName="auxiliar2.ips">
+            <password encrypted="false">bpm</password>
+            <firstName>Andrés</firstName>
+            <lastName>Mejía</lastName>
+            <title>Sr.</title>
+            <jobTitle>Auxiliar de Agendamiento - Excepciones</jobTitle>
+            <manager>coordinador.ips</manager>
+            <enabled>true</enabled>
+            <professionalData>
+                <email>auxiliar2@ips-salud.co</email>
+                <city>Medellín</city>
+                <country>Colombia</country>
+            </professionalData>
+        </user>
+
+        <user userName="auxiliar3.ips">
+            <password encrypted="false">bpm</password>
+            <firstName>Valentina</firstName>
+            <lastName>Osorio</lastName>
+            <title>Sra.</title>
+            <jobTitle>Auxiliar de Agendamiento - Excepciones</jobTitle>
+            <manager>coordinador.ips</manager>
+            <enabled>true</enabled>
+            <professionalData>
+                <email>auxiliar3@ips-salud.co</email>
+                <city>Medellín</city>
+                <country>Colombia</country>
+            </professionalData>
+        </user>
+
+        <user userName="auxiliar4.ips">
+            <password encrypted="false">bpm</password>
+            <firstName>Mateo</firstName>
+            <lastName>Cardona</lastName>
+            <title>Sr.</title>
+            <jobTitle>Auxiliar de Agendamiento - Excepciones</jobTitle>
+            <manager>coordinador.ips</manager>
+            <enabled>true</enabled>
+            <professionalData>
+                <email>auxiliar4@ips-salud.co</email>
+                <city>Medellín</city>
+                <country>Colombia</country>
+            </professionalData>
+        </user>
+
+        <user userName="orquestador.api">
+            <password encrypted="false">bpm</password>
+            <firstName>Servicio</firstName>
+            <lastName>Omnicanal API</lastName>
+            <title>Sys</title>
+            <jobTitle>Cuenta Técnica Integración WhatsApp / n8n</jobTitle>
+            <manager>coordinador.ips</manager>
+            <enabled>true</enabled>
+            <professionalData>
+                <email>integraciones@ips-salud.co</email>
+                <city>Medellín</city>
+                <country>Colombia</country>
+            </professionalData>
+        </user>
+
+        <user userName="paciente.demo">
+            <password encrypted="false">bpm</password>
+            <firstName>Carlos</firstName>
+            <lastName>Pérez</lastName>
+            <title>Sr.</title>
+            <jobTitle>Paciente Afiliado</jobTitle>
+            <enabled>true</enabled>
+            <professionalData>
+                <email>carlos.perez@correo.co</email>
+                <phoneNumber>+57-300-1234567</phoneNumber>
+                <city>Medellín</city>
+                <country>Colombia</country>
+            </professionalData>
+        </user>
+    </users>
+
+    <groups>
+        <group name="ips_consulta_externa">
+            <displayName>IPS Consulta Externa</displayName>
+            <description>Institución Prestadora de Servicios de Salud - Consulta Externa</description>
+        </group>
+        <group name="central_citas">
+            <displayName>Central de Agendamiento</displayName>
+            <description>Equipo de auxiliares encargados de atender excepciones de agendamiento</description>
+            <parentPath>/ips_consulta_externa</parentPath>
+        </group>
+        <group name="portal_pacientes">
+            <displayName>Portal Omnicanal Pacientes</displayName>
+            <description>Usuarios externos y canal omnicanal (WhatsApp, Correo, Portal Web)</description>
+            <parentPath>/ips_consulta_externa</parentPath>
+        </group>
+    </groups>
+
+    <roles>
+        <role name="coordinador">
+            <displayName>Coordinador de Citas</displayName>
+            <description>Supervisor del proceso BPMS y administrador de indicadores SLA</description>
+        </role>
+        <role name="auxiliar_agendamiento">
+            <displayName>Auxiliar de Agendamiento</displayName>
+            <description>Atiende casos excepcionales escalados por IA, EPS o falta de agenda</description>
+        </role>
+        <role name="paciente">
+            <displayName>Paciente / Solicitante</displayName>
+            <description>Inicia solicitudes de cita y responde recordatorios de asistencia</description>
+        </role>
+        <role name="integracion_api">
+            <displayName>Integración Omnicanal API</displayName>
+            <description>Rol técnico para instanciar casos y actualizar respuestas vía Bonita REST API</description>
+        </role>
+    </roles>
+
+    <memberships>
+        <membership>
+            <userName>coordinador.ips</userName>
+            <roleName>coordinador</roleName>
+            <groupName>central_citas</groupName>
+            <groupParentPath>/ips_consulta_externa</groupParentPath>
+        </membership>
+        <membership>
+            <userName>auxiliar1.ips</userName>
+            <roleName>auxiliar_agendamiento</roleName>
+            <groupName>central_citas</groupName>
+            <groupParentPath>/ips_consulta_externa</groupParentPath>
+        </membership>
+        <membership>
+            <userName>auxiliar2.ips</userName>
+            <roleName>auxiliar_agendamiento</roleName>
+            <groupName>central_citas</groupName>
+            <groupParentPath>/ips_consulta_externa</groupParentPath>
+        </membership>
+        <membership>
+            <userName>auxiliar3.ips</userName>
+            <roleName>auxiliar_agendamiento</roleName>
+            <groupName>central_citas</groupName>
+            <groupParentPath>/ips_consulta_externa</groupParentPath>
+        </membership>
+        <membership>
+            <userName>auxiliar4.ips</userName>
+            <roleName>auxiliar_agendamiento</roleName>
+            <groupName>central_citas</groupName>
+            <groupParentPath>/ips_consulta_externa</groupParentPath>
+        </membership>
+        <membership>
+            <userName>orquestador.api</userName>
+            <roleName>integracion_api</roleName>
+            <groupName>portal_pacientes</groupName>
+            <groupParentPath>/ips_consulta_externa</groupParentPath>
+        </membership>
+        <membership>
+            <userName>paciente.demo</userName>
+            <roleName>paciente</roleName>
+            <groupName>portal_pacientes</groupName>
+            <groupParentPath>/ips_consulta_externa</groupParentPath>
+        </membership>
+    </memberships>
+</organization:Organization>

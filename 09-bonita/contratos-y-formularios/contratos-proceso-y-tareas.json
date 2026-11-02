@@ -1,0 +1,117 @@
+{
+  "proceso": {
+    "nombre": "Agendamiento Automatizado de Citas IPS",
+    "idProcesoBPMN": "Process_AgendamientoCitasIPS",
+    "version": "1.0"
+  },
+  "variablesDeNegocioBDM": [
+    {
+      "nombre": "solicitudCita",
+      "tipo": "co.edu.eafit.ips.model.SolicitudCita",
+      "scriptInicializacion": "scripts-groovy/01_inicializar_solicitud.groovy"
+    },
+    {
+      "nombre": "citaMedica",
+      "tipo": "co.edu.eafit.ips.model.CitaMedica",
+      "valorInicial": null
+    },
+    {
+      "nombre": "cupoSeleccionado",
+      "tipo": "co.edu.eafit.ips.model.CupoAgenda",
+      "valorInicial": null
+    }
+  ],
+  "variablesDeProceso": [
+    {
+      "nombre": "cupoDisponible",
+      "tipo": "java.lang.Boolean",
+      "valorPorDefecto": false
+    },
+    {
+      "nombre": "respuestaRecordatorio",
+      "tipo": "java.lang.String",
+      "valorPorDefecto": "CONFIRMAR"
+    }
+  ],
+  "contratos": {
+    "1_instanciacionProceso": {
+      "ubicacion": "Pool -> Execution -> Contract",
+      "inputComplejo": "solicitudInput",
+      "campos": [
+        { "nombre": "canalOrigen", "tipo": "TEXT", "obligatorio": true, "valoresPermitidos": ["WHATSAPP", "CORREO", "LLAMADA", "PORTAL_WEB"] },
+        { "nombre": "mensajeOriginal", "tipo": "TEXT", "obligatorio": true, "descripcion": "Mensaje libre enviado por el paciente o transcripción de llamada" },
+        { "nombre": "telefonoContacto", "tipo": "TEXT", "obligatorio": true },
+        { "nombre": "correoContacto", "tipo": "TEXT", "obligatorio": false },
+        { "nombre": "tipoDocumento", "tipo": "TEXT", "obligatorio": false },
+        { "nombre": "numeroDocumento", "tipo": "TEXT", "obligatorio": false },
+        { "nombre": "nombreContacto", "tipo": "TEXT", "obligatorio": false },
+        { "nombre": "epsInformada", "tipo": "TEXT", "obligatorio": false },
+        { "nombre": "autorizaTratamientoDatos", "tipo": "BOOLEAN", "obligatorio": true, "descripcion": "Consentimiento expreso Ley 1581 de 2012" }
+      ],
+      "restriccionesValidacion": [
+        {
+          "nombre": "Regla_Ley_1581_HabeasData",
+          "expresion": "solicitudInput.autorizaTratamientoDatos == true",
+          "mensajeError": "Debe autorizar el tratamiento de datos personales de salud conforme a la Ley 1581 de 2012."
+        },
+        {
+          "nombre": "Regla_Mensaje_No_Vacio",
+          "expresion": "solicitudInput.mensajeOriginal != null && solicitudInput.mensajeOriginal.trim().length() >= 5",
+          "mensajeError": "El mensaje de la solicitud no puede estar vacío."
+        }
+      ],
+      "ejemploPayloadRestAPI": {
+        "solicitudInput": {
+          "canalOrigen": "WHATSAPP",
+          "mensajeOriginal": "Buenos días, soy Carlos Pérez con CC 1037654321 afiliado a EPS SURA, necesito cita de Medicina General urgente en las mañanas.",
+          "telefonoContacto": "+573001234567",
+          "correoContacto": "carlos.perez@correo.co",
+          "tipoDocumento": null,
+          "numeroDocumento": null,
+          "nombreContacto": "Carlos Pérez",
+          "epsInformada": null,
+          "autorizaTratamientoDatos": true
+        }
+      }
+    },
+    "2_tareaExcepcionAuxiliar": {
+      "idTareaBPMN": "Task_Excepcion",
+      "actorAsignado": "Actor_Auxiliar (Rol: auxiliar_agendamiento)",
+      "inputComplejo": "resolucionAuxiliarInput",
+      "campos": [
+        { "nombre": "logroAgendar", "tipo": "BOOLEAN", "obligatorio": true },
+        { "nombre": "numeroDocumentoCorregido", "tipo": "TEXT", "obligatorio": false },
+        { "nombre": "codigoAutorizacionManual", "tipo": "TEXT", "obligatorio": false },
+        { "nombre": "especialidadAsignada", "tipo": "TEXT", "obligatorio": false },
+        { "nombre": "medicoAsignado", "tipo": "TEXT", "obligatorio": false },
+        { "nombre": "sedeAsignada", "tipo": "TEXT", "obligatorio": false },
+        { "nombre": "consultorioAsignado", "tipo": "TEXT", "obligatorio": false },
+        { "nombre": "fechaHoraAsignada", "tipo": "OFFSETDATETIME", "obligatorio": false },
+        { "nombre": "observaciones", "tipo": "TEXT", "obligatorio": true }
+      ],
+      "restriccionesValidacion": [
+        {
+          "nombre": "Regla_Datos_Cita_Manual_Obligatorios",
+          "expresion": "!resolucionAuxiliarInput.logroAgendar || (resolucionAuxiliarInput.especialidadAsignada != null && resolucionAuxiliarInput.medicoAsignado != null && resolucionAuxiliarInput.fechaHoraAsignada != null)",
+          "mensajeError": "Si marca que logró agendar la cita manualmente, debe indicar especialidad, médico y fecha/hora asignada."
+        }
+      ]
+    },
+    "3_tareaRespuestaRecordatorio": {
+      "idTareaBPMN": "Task_Responder",
+      "actorAsignado": "Actor_Paciente (Rol: paciente / integracion_api)",
+      "inputComplejo": "respuestaInput",
+      "campos": [
+        { "nombre": "accionPaciente", "tipo": "TEXT", "obligatorio": true, "valoresPermitidos": ["CONFIRMAR", "REPROGRAMAR", "CANCELAR"] },
+        { "nombre": "motivoOpcional", "tipo": "TEXT", "obligatorio": false }
+      ],
+      "restriccionesValidacion": [
+        {
+          "nombre": "Regla_Accion_Valida",
+          "expresion": "['CONFIRMAR', 'REPROGRAMAR', 'CANCELAR'].contains(respuestaInput.accionPaciente)",
+          "mensajeError": "La respuesta al recordatorio debe ser CONFIRMAR, REPROGRAMAR o CANCELAR."
+        }
+      ]
+    }
+  }
+}

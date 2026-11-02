@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<businessObjectModel xmlns="http://documentation.bonitasoft.com/bdm-xml-schema/1.0" modelVersion="1.0" productVersion="8.0.0">
+    <businessObjects>
+        <businessObject qualifiedName="co.edu.eafit.ips.model.Paciente">
+            <description>Entidad que representa al paciente afiliado a una EPS que solicita atención médica de consulta externa en la IPS. Incluye trazabilidad de consentimiento de tratamiento de datos personales (Ley 1581 de 2012).</description>
+            <fields>
+                <field type="STRING" length="10" name="tipoDocumento" nullable="false" collection="false"/>
+                <field type="STRING" length="30" name="numeroDocumento" nullable="false" collection="false"/>
+                <field type="STRING" length="150" name="nombreCompleto" nullable="false" collection="false"/>
+                <field type="STRING" length="30" name="telefono" nullable="false" collection="false"/>
+                <field type="STRING" length="120" name="correoElectronico" nullable="true" collection="false"/>
+                <field type="STRING" length="80" name="eps" nullable="false" collection="false"/>
+                <field type="BOOLEAN" length="255" name="activoEPS" nullable="false" collection="false"/>
+                <field type="STRING" length="30" name="regimenAfiliacion" nullable="true" collection="false"/>
+                <field type="BOOLEAN" length="255" name="autorizaTratamientoDatos" nullable="false" collection="false"/>
+                <field type="OFFSETDATETIME" length="255" name="fechaConsentimiento" nullable="true" collection="false"/>
+            </fields>
+            <uniqueConstraints>
+                <uniqueConstraint name="UK_PAC_DOCUMENTO">
+                    <fieldNames>
+                        <fieldName>tipoDocumento</fieldName>
+                        <fieldName>numeroDocumento</fieldName>
+                    </fieldNames>
+                </uniqueConstraint>
+            </uniqueConstraints>
+            <queries>
+                <query name="findByDocumento" content="SELECT p FROM Paciente p WHERE p.tipoDocumento = :tipoDocumento AND p.numeroDocumento = :numeroDocumento" returnType="co.edu.eafit.ips.model.Paciente">
+                    <queryParameters>
+                        <queryParameter name="tipoDocumento" className="java.lang.String"/>
+                        <queryParameter name="numeroDocumento" className="java.lang.String"/>
+                    </queryParameters>
+                </query>
+                <query name="findByEpsActivos" content="SELECT p FROM Paciente p WHERE p.eps = :eps AND p.activoEPS = true ORDER BY p.nombreCompleto ASC" returnType="java.util.List">
+                    <queryParameters>
+                        <queryParameter name="eps" className="java.lang.String"/>
+                    </queryParameters>
+                </query>
+            </queries>
+            <indexes>
+                <index name="IDX_PAC_NUMDOC">
+                    <fieldNames>
+                        <fieldName>numeroDocumento</fieldName>
+                    </fieldNames>
+                </index>
+            </indexes>
+        </businessObject>
+
+        <businessObject qualifiedName="co.edu.eafit.ips.model.CupoAgenda">
+            <description>Representa un bloque horario en la agenda de un médico especialista en una sede de la IPS para evitar doble digitación y citas cruzadas.</description>
+            <fields>
+                <field type="STRING" length="40" name="codigoCupo" nullable="false" collection="false"/>
+                <field type="STRING" length="80" name="especialidad" nullable="false" collection="false"/>
+                <field type="STRING" length="120" name="nombreMedico" nullable="false" collection="false"/>
+                <field type="STRING" length="30" name="consultorio" nullable="false" collection="false"/>
+                <field type="STRING" length="80" name="sedeIPS" nullable="false" collection="false"/>
+                <field type="OFFSETDATETIME" length="255" name="fechaHoraInicio" nullable="false" collection="false"/>
+                <field type="INTEGER" length="255" name="duracionMinutos" nullable="false" collection="false"/>
+                <field type="BOOLEAN" length="255" name="disponible" nullable="false" collection="false"/>
+            </fields>
+            <uniqueConstraints>
+                <uniqueConstraint name="UK_CUPO_CODIGO">
+                    <fieldNames>
+                        <fieldName>codigoCupo</fieldName>
+                    </fieldNames>
+                </uniqueConstraint>
+            </uniqueConstraints>
+            <queries>
+                <query name="findDisponiblesPorEspecialidad" content="SELECT c FROM CupoAgenda c WHERE c.especialidad = :especialidad AND c.disponible = true ORDER BY c.fechaHoraInicio ASC" returnType="java.util.List">
+                    <queryParameters>
+                        <queryParameter name="especialidad" className="java.lang.String"/>
+                    </queryParameters>
+                </query>
+            </queries>
+            <indexes>
+                <index name="IDX_CUPO_ESP_DISP">
+                    <fieldNames>
+                        <fieldName>especialidad</fieldName>
+                        <fieldName>disponible</fieldName>
+                    </fieldNames>
+                </index>
+            </indexes>
+        </businessObject>
+
+        <businessObject qualifiedName="co.edu.eafit.ips.model.SolicitudCita">
+            <description>Solicitud omnicanal recibida por WhatsApp, correo electrónico, llamada o portal web, enriquecida por el componente de IA y verificada ante el portal de la EPS mediante RPA.</description>
+            <fields>
+                <field type="STRING" length="40" name="codigoRadicado" nullable="false" collection="false"/>
+                <field type="STRING" length="30" name="canalOrigen" nullable="false" collection="false"/>
+                <field type="TEXT" length="255" name="mensajeOriginal" nullable="false" collection="false"/>
+                <field type="STRING" length="80" name="especialidadRequerida" nullable="true" collection="false"/>
+                <field type="STRING" length="20" name="nivelUrgencia" nullable="true" collection="false"/>
+                <field type="STRING" length="20" name="jornadaPreferida" nullable="true" collection="false"/>
+                <field type="DOUBLE" length="255" name="confianzaIA" nullable="true" collection="false"/>
+                <field type="BOOLEAN" length="255" name="datosCompletos" nullable="false" collection="false"/>
+                <field type="STRING" length="50" name="codigoAutorizacionEPS" nullable="true" collection="false"/>
+                <field type="BOOLEAN" length="255" name="autorizacionVigente" nullable="true" collection="false"/>
+                <field type="BOOLEAN" length="255" name="requiereExcepcion" nullable="false" collection="false"/>
+                <field type="STRING" length="255" name="motivoExcepcion" nullable="true" collection="false"/>
+                <field type="TEXT" length="255" name="observacionesAuxiliar" nullable="true" collection="false"/>
+                <field type="STRING" length="30" name="estadoSolicitud" nullable="false" collection="false"/>
+                <field type="OFFSETDATETIME" length="255" name="fechaRecepcion" nullable="false" collection="false"/>
+                <relationField type="AGGREGATION" reference="co.edu.eafit.ips.model.Paciente" fetchType="EAGER" name="paciente" nullable="true" collection="false"/>
+            </fields>
+            <uniqueConstraints>
+                <uniqueConstraint name="UK_SOL_RADICADO">
+                    <fieldNames>
+                        <fieldName>codigoRadicado</fieldName>
+                    </fieldNames>
+                </uniqueConstraint>
+            </uniqueConstraints>
+            <queries>
+                <query name="findExcepcionesPendientes" content="SELECT s FROM SolicitudCita s WHERE s.requiereExcepcion = true AND s.estadoSolicitud = 'EN_EXCEPCION' ORDER BY s.fechaRecepcion ASC" returnType="java.util.List">
+                    <queryParameters/>
+                </query>
+                <query name="findByEstado" content="SELECT s FROM SolicitudCita s WHERE s.estadoSolicitud = :estadoSolicitud ORDER BY s.fechaRecepcion DESC" returnType="java.util.List">
+                    <queryParameters>
+                        <queryParameter name="estadoSolicitud" className="java.lang.String"/>
+                    </queryParameters>
+                </query>
+            </queries>
+            <indexes>
+                <index name="IDX_SOL_ESTADO">
+                    <fieldNames>
+                        <fieldName>estadoSolicitud</fieldName>
+                    </fieldNames>
+                </index>
+            </indexes>
+        </businessObject>
+
+        <businessObject qualifiedName="co.edu.eafit.ips.model.CitaMedica">
+            <description>Cita médica asignada en la IPS, incluyendo su ciclo completo de confirmación, recordatorio 24 horas antes, reprogramación o cancelación con liberación automática de cupo.</description>
+            <fields>
+                <field type="STRING" length="40" name="codigoCita" nullable="false" collection="false"/>
+                <field type="OFFSETDATETIME" length="255" name="fechaHoraCita" nullable="false" collection="false"/>
+                <field type="STRING" length="80" name="especialidad" nullable="false" collection="false"/>
+                <field type="STRING" length="120" name="nombreMedico" nullable="false" collection="false"/>
+                <field type="STRING" length="30" name="consultorio" nullable="false" collection="false"/>
+                <field type="STRING" length="80" name="sedeIPS" nullable="false" collection="false"/>
+                <field type="STRING" length="30" name="estado" nullable="false" collection="false"/>
+                <field type="BOOLEAN" length="255" name="asignadaPorAuxiliar" nullable="false" collection="false"/>
+                <field type="BOOLEAN" length="255" name="confirmacionEnviada" nullable="false" collection="false"/>
+                <field type="BOOLEAN" length="255" name="recordatorioEnviado" nullable="false" collection="false"/>
+                <field type="STRING" length="30" name="respuestaRecordatorio" nullable="true" collection="false"/>
+                <field type="OFFSETDATETIME" length="255" name="fechaRegistro" nullable="false" collection="false"/>
+                <field type="OFFSETDATETIME" length="255" name="fechaActualizacion" nullable="true" collection="false"/>
+                <relationField type="AGGREGATION" reference="co.edu.eafit.ips.model.Paciente" fetchType="EAGER" name="paciente" nullable="false" collection="false"/>
+                <relationField type="AGGREGATION" reference="co.edu.eafit.ips.model.SolicitudCita" fetchType="LAZY" name="solicitudOrigen" nullable="false" collection="false"/>
+                <relationField type="AGGREGATION" reference="co.edu.eafit.ips.model.CupoAgenda" fetchType="EAGER" name="cupoAsignado" nullable="true" collection="false"/>
+            </fields>
+            <uniqueConstraints>
+                <uniqueConstraint name="UK_CITA_CODIGO">
+                    <fieldNames>
+                        <fieldName>codigoCita</fieldName>
+                    </fieldNames>
+                </uniqueConstraint>
+            </uniqueConstraints>
+            <queries>
+                <query name="findCitasActivasPorPaciente" content="SELECT c FROM CitaMedica c WHERE c.paciente = :paciente AND c.estado IN ('AGENDADA', 'CONFIRMADA') ORDER BY c.fechaHoraCita ASC" returnType="java.util.List">
+                    <queryParameters>
+                        <queryParameter name="paciente" className="co.edu.eafit.ips.model.Paciente"/>
+                    </queryParameters>
+                </query>
+                <query name="findByCodigoCita" content="SELECT c FROM CitaMedica c WHERE c.codigoCita = :codigoCita" returnType="co.edu.eafit.ips.model.CitaMedica">
+                    <queryParameters>
+                        <queryParameter name="codigoCita" className="java.lang.String"/>
+                    </queryParameters>
+                </query>
+            </queries>
+            <indexes>
+                <index name="IDX_CITA_ESTADO">
+                    <fieldNames>
+                        <fieldName>estado</fieldName>
+                    </fieldNames>
+                </index>
+            </indexes>
+        </businessObject>
+    </businessObjects>
+</businessObjectModel>
