@@ -3,7 +3,7 @@
     <customUserInfoDefinitions>
         <customUserInfoDefinition>
             <name>Sede IPS</name>
-            <description>Sede de atención asignada al funcionario de la IPS</description>
+            <description>Sede de atencion asignada al funcionario de la IPS</description>
         </customUserInfoDefinition>
         <customUserInfoDefinition>
             <name>Turno</name>
@@ -13,127 +13,110 @@
 
     <users>
         <user userName="coordinador.ips">
-            <password encrypted="false">bpm</password>
             <firstName>Laura</firstName>
-            <lastName>Gómez</lastName>
+            <lastName>Gomez</lastName>
             <title>Dra.</title>
             <jobTitle>Coordinadora Central de Citas IPS</jobTitle>
-            <enabled>true</enabled>
             <professionalData>
                 <email>coordinacion.citas@ips-salud.co</email>
                 <phoneNumber>+57-604-4440100</phoneNumber>
-                <city>Medellín</city>
+                <city>Medellin</city>
                 <country>Colombia</country>
             </professionalData>
+            <enabled>true</enabled>
+            <password encrypted="false">bpm</password>
         </user>
 
         <user userName="auxiliar1.ips">
-            <password encrypted="false">bpm</password>
             <firstName>Camila</firstName>
             <lastName>Restrepo</lastName>
             <title>Sra.</title>
             <jobTitle>Auxiliar de Agendamiento - Excepciones</jobTitle>
             <manager>coordinador.ips</manager>
-            <enabled>true</enabled>
             <professionalData>
                 <email>auxiliar1@ips-salud.co</email>
-                <city>Medellín</city>
+                <city>Medellin</city>
                 <country>Colombia</country>
             </professionalData>
+            <enabled>true</enabled>
+            <password encrypted="false">bpm</password>
         </user>
 
         <user userName="auxiliar2.ips">
-            <password encrypted="false">bpm</password>
-            <firstName>Andrés</firstName>
-            <lastName>Mejía</lastName>
+            <firstName>Andres</firstName>
+            <lastName>Mejia</lastName>
             <title>Sr.</title>
             <jobTitle>Auxiliar de Agendamiento - Excepciones</jobTitle>
             <manager>coordinador.ips</manager>
-            <enabled>true</enabled>
             <professionalData>
                 <email>auxiliar2@ips-salud.co</email>
-                <city>Medellín</city>
+                <city>Medellin</city>
                 <country>Colombia</country>
             </professionalData>
+            <enabled>true</enabled>
+            <password encrypted="false">bpm</password>
         </user>
 
         <user userName="auxiliar3.ips">
-            <password encrypted="false">bpm</password>
             <firstName>Valentina</firstName>
             <lastName>Osorio</lastName>
             <title>Sra.</title>
             <jobTitle>Auxiliar de Agendamiento - Excepciones</jobTitle>
             <manager>coordinador.ips</manager>
-            <enabled>true</enabled>
             <professionalData>
                 <email>auxiliar3@ips-salud.co</email>
-                <city>Medellín</city>
+                <city>Medellin</city>
                 <country>Colombia</country>
             </professionalData>
+            <enabled>true</enabled>
+            <password encrypted="false">bpm</password>
         </user>
 
         <user userName="auxiliar4.ips">
-            <password encrypted="false">bpm</password>
             <firstName>Mateo</firstName>
             <lastName>Cardona</lastName>
             <title>Sr.</title>
             <jobTitle>Auxiliar de Agendamiento - Excepciones</jobTitle>
             <manager>coordinador.ips</manager>
-            <enabled>true</enabled>
             <professionalData>
                 <email>auxiliar4@ips-salud.co</email>
-                <city>Medellín</city>
+                <city>Medellin</city>
                 <country>Colombia</country>
             </professionalData>
+            <enabled>true</enabled>
+            <password encrypted="false">bpm</password>
         </user>
 
         <user userName="orquestador.api">
-            <password encrypted="false">bpm</password>
             <firstName>Servicio</firstName>
             <lastName>Omnicanal API</lastName>
             <title>Sys</title>
-            <jobTitle>Cuenta Técnica Integración WhatsApp / n8n</jobTitle>
+            <jobTitle>Cuenta Tecnica Integracion WhatsApp / n8n</jobTitle>
             <manager>coordinador.ips</manager>
-            <enabled>true</enabled>
             <professionalData>
                 <email>integraciones@ips-salud.co</email>
-                <city>Medellín</city>
+                <city>Medellin</city>
                 <country>Colombia</country>
             </professionalData>
+            <enabled>true</enabled>
+            <password encrypted="false">bpm</password>
         </user>
 
         <user userName="paciente.demo">
-            <password encrypted="false">bpm</password>
             <firstName>Carlos</firstName>
-            <lastName>Pérez</lastName>
+            <lastName>Perez</lastName>
             <title>Sr.</title>
             <jobTitle>Paciente Afiliado</jobTitle>
-            <enabled>true</enabled>
             <professionalData>
                 <email>carlos.perez@correo.co</email>
                 <phoneNumber>+57-300-1234567</phoneNumber>
-                <city>Medellín</city>
+                <city>Medellin</city>
                 <country>Colombia</country>
             </professionalData>
+            <enabled>true</enabled>
+            <password encrypted="false">bpm</password>
         </user>
     </users>
-
-    <groups>
-        <group name="ips_consulta_externa">
-            <displayName>IPS Consulta Externa</displayName>
-            <description>Institución Prestadora de Servicios de Salud - Consulta Externa</description>
-        </group>
-        <group name="central_citas">
-            <displayName>Central de Agendamiento</displayName>
-            <description>Equipo de auxiliares encargados de atender excepciones de agendamiento</description>
-            <parentPath>/ips_consulta_externa</parentPath>
-        </group>
-        <group name="portal_pacientes">
-            <displayName>Portal Omnicanal Pacientes</displayName>
-            <description>Usuarios externos y canal omnicanal (WhatsApp, Correo, Portal Web)</description>
-            <parentPath>/ips_consulta_externa</parentPath>
-        </group>
-    </groups>
 
     <roles>
         <role name="coordinador">
@@ -149,10 +132,25 @@
             <description>Inicia solicitudes de cita y responde recordatorios de asistencia</description>
         </role>
         <role name="integracion_api">
-            <displayName>Integración Omnicanal API</displayName>
-            <description>Rol técnico para instanciar casos y actualizar respuestas vía Bonita REST API</description>
+            <displayName>Integracion Omnicanal API</displayName>
+            <description>Rol tecnico para instanciar casos y actualizar respuestas via Bonita REST API</description>
         </role>
     </roles>
+
+    <groups>
+        <group name="ips_consulta_externa">
+            <displayName>IPS Consulta Externa</displayName>
+            <description>Institucion Prestadora de Servicios de Salud - Consulta Externa</description>
+        </group>
+        <group name="central_citas" parentPath="/ips_consulta_externa">
+            <displayName>Central de Agendamiento</displayName>
+            <description>Equipo de auxiliares encargados de atender excepciones de agendamiento</description>
+        </group>
+        <group name="portal_pacientes" parentPath="/ips_consulta_externa">
+            <displayName>Portal Omnicanal Pacientes</displayName>
+            <description>Usuarios externos y canal omnicanal (WhatsApp, Correo, Portal Web)</description>
+        </group>
+    </groups>
 
     <memberships>
         <membership>

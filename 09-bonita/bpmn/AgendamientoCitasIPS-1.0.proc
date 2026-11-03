@@ -1,0 +1,892 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:decision="http://www.bonitasoft.org/ns/bpm/process/decision" xmlns:expression="http://www.bonitasoft.org/ns/bpm/expression" xmlns:notation="http://www.eclipse.org/gmf/runtime/1.0.3/notation" xmlns:parameter="http://www.bonitasoft.org/ns/bpm/parameter" xmlns:process="http://www.bonitasoft.org/ns/bpm/process">
+  <process:MainProcess xmi:id="_Main_AgendamientoCitasIPS" name="AgendamientoCitasIPS" version="1.0" bonitaModelVersion="9">
+    <elements xmi:type="process:Pool" xmi:id="_Pool_AgendamientoCitasIPS" documentation="Proceso ejecutable BPMS en Bonita Studio para la automatización de asignación, confirmación, recordatorio, reprogramación y cancelación de citas médicas en una IPS de consulta externa (Cumplimiento Ley 1581 de 2012)." name="Agendamiento Automatizado de Citas IPS" version="1.0">
+      <parameters xmi:type="parameter:Parameter" xmi:id="_PM_smtpHost" name="smtpHost" typeClassname="java.lang.String" description="Servidor SMTP (localhost para bandeja web local; smtp.gmail.com para Gmail)"/><parameters xmi:type="parameter:Parameter" xmi:id="_PM_smtpPort" name="smtpPort" typeClassname="java.lang.Integer" description="Puerto SMTP (1025 bandeja web local, 465 SSL, 587 STARTTLS)"/><parameters xmi:type="parameter:Parameter" xmi:id="_PM_smtpSsl" name="smtpSsl" typeClassname="java.lang.Boolean" description="Usar SSL/TLS directo (true para puerto 465)"/><parameters xmi:type="parameter:Parameter" xmi:id="_PM_smtpStarttls" name="smtpStarttls" typeClassname="java.lang.Boolean" description="Usar STARTTLS (true para puerto 587)"/><parameters xmi:type="parameter:Parameter" xmi:id="_PM_smtpUser" name="smtpUser" typeClassname="java.lang.String" description="Usuario SMTP. Use &apos;-&apos; si no requiere autenticacion"/><parameters xmi:type="parameter:Parameter" xmi:id="_PM_smtpPassword" name="smtpPassword" typeClassname="java.lang.String" description="Clave o App Password SMTP. Use &apos;-&apos; si no requiere autenticacion"/><parameters xmi:type="parameter:Parameter" xmi:id="_PM_smtpFrom" name="smtpFrom" typeClassname="java.lang.String" description="Direccion remitente de las notificaciones"/>
+      <elements xmi:type="process:Lane" xmi:id="_Lane_Paciente" name="Paciente (Portal / WhatsApp)" actor="_Actor_Paciente">
+        <elements xmi:type="process:StartEvent" xmi:id="_Start_Solicitud" documentation="Inicio del proceso mediante formulario de solicitud en Portal Bonita o invocación vía REST API desde webhook omnicanal (WhatsApp/Correo). Valida consentimiento Ley 1581." name="Solicitud recibida" outgoing="_Flow_F01">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_Start_Solicitud" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_Start_Solicitud" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_Start_Solicitud" name="" content="" returnTypeFixed="true"/>
+        </elements>
+        <elements xmi:type="process:EndEvent" xmi:id="_End_Excepcion" documentation="Fin del caso cuando la excepción no permite asignar cita (ej. afiliación suspendida o paciente desiste)." name="Solicitud cerrada sin cita" incoming="_Flow_F_Aux_Cerrado">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_End_Excepcion" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_End_Excepcion" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_End_Excepcion" name="" content="" returnTypeFixed="true"/>
+        </elements>
+        <elements xmi:type="process:Task" xmi:id="_Task_Responder" documentation="Tarea de usuario (Portal Paciente o completada automáticamente vía Bonita REST API cuando el paciente responde en WhatsApp): CONFIRMAR, REPROGRAMAR o CANCELAR." name="Responder recordatorio" outgoing="_Flow_F14" incoming="_Flow_F13" overrideActorsOfTheLane="false" actor="_Actor_Paciente">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_Task_Responder" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_Task_Responder" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_Task_Responder" name="" content="" returnTypeFixed="true"/>
+          <operations xmi:type="expression:Operation" xmi:id="_Op_Responder_Var">
+            <leftOperand xmi:type="expression:Expression" xmi:id="_LO_Responder_Var" name="respuestaRecordatorio" content="respuestaRecordatorio" type="TYPE_VARIABLE" returnType="java.lang.String">
+              <referencedElements xmi:type="process:Data" xmi:id="_Ref_Responder_Var" name="respuestaRecordatorio" dataType="_DT_Text"/>
+            </leftOperand>
+            <rightOperand xmi:type="expression:Expression" xmi:id="_RO_Responder_Var" name="scriptAccionPaciente" content="return (respuestaInput?.accionPaciente ?: &quot;CONFIRMAR&quot;).toUpperCase()" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="java.lang.String">
+              <referencedElements xmi:type="process:ContractInput" xmi:id="_Ref_CI_respuestaInput_1" name="respuestaInput" type="COMPLEX"/>
+            </rightOperand>
+            <operator xmi:type="expression:Operator" xmi:id="_Opr_Responder_Var" type="ASSIGNMENT"/>
+          </operations>
+          <operations xmi:type="expression:Operation" xmi:id="_Op_Responder_BDM">
+            <leftOperand xmi:type="expression:Expression" xmi:id="_LO_Responder_BDM" name="citaMedica" content="citaMedica" type="TYPE_VARIABLE" returnType="co.edu.eafit.ips.model.CitaMedica">
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Responder_Cita" name="citaMedica" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CitaMedica"/>
+            </leftOperand>
+            <rightOperand xmi:type="expression:Expression" xmi:id="_RO_Responder_BDM" name="actualizarRespuestaCita()" content="import java.time.OffsetDateTime&#xD;&#xA;import java.time.ZoneOffset&#xD;&#xA;&#xD;&#xA;def accion = (respuestaInput?.accionPaciente ?: &quot;CONFIRMAR&quot;).toUpperCase()&#xD;&#xA;if (citaMedica != null) {&#xD;&#xA;    citaMedica.respuestaRecordatorio = accion&#xD;&#xA;    citaMedica.fechaActualizacion = OffsetDateTime.now(ZoneOffset.ofHours(-5))&#xD;&#xA;    if (accion == &quot;CONFIRMAR&quot;) {&#xD;&#xA;        citaMedica.estado = &quot;CONFIRMADA&quot;&#xD;&#xA;        solicitudCita.estadoSolicitud = &quot;CONFIRMADA&quot;&#xD;&#xA;    }&#xD;&#xA;}&#xD;&#xA;return citaMedica" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="co.edu.eafit.ips.model.CitaMedica">
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Responder_Cita2" name="citaMedica" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CitaMedica"/>
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Responder_Sol" name="solicitudCita" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.SolicitudCita"/>
+              <referencedElements xmi:type="process:ContractInput" xmi:id="_Ref_CI_respuestaInput_2" name="respuestaInput" type="COMPLEX"/>
+            </rightOperand>
+            <operator xmi:type="expression:Operator" xmi:id="_Opr_Responder_BDM" type="ASSIGNMENT"/>
+          </operations>
+          <loopCondition xmi:type="expression:Expression" xmi:id="_LC_Task_Responder" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+          <loopMaximum xmi:type="expression:Expression" xmi:id="_LM_Task_Responder" name="" content="" returnType="java.lang.Integer" returnTypeFixed="true"/>
+          <cardinalityExpression xmi:type="expression:Expression" xmi:id="_CE_Task_Responder" name="" content="" returnType="java.lang.Integer" returnTypeFixed="true"/>
+          <iteratorExpression xmi:type="expression:Expression" xmi:id="_IE_Task_Responder" name="multiInstanceIterator" content="multiInstanceIterator" type="MULTIINSTANCE_ITERATOR_TYPE" returnType="java.lang.Object" returnTypeFixed="true"/>
+          <completionCondition xmi:type="expression:Expression" xmi:id="_CC_Task_Responder" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+          <formMapping xmi:type="process:FormMapping" xmi:id="_FM_Task_Responder" type="NONE">
+            <targetForm xmi:type="expression:Expression" xmi:id="_TF_Task_Responder" name="" content="" type="FORM_REFERENCE_TYPE" returnTypeFixed="true"/>
+          </formMapping>
+          <contract xmi:type="process:Contract" xmi:id="_Contract_Task_Responder">
+            <inputs xmi:type="process:ContractInput" xmi:id="_CI_respuestaInput" name="respuestaInput" type="COMPLEX" description="Respuesta del paciente al recordatorio 24h antes">
+              <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_respuestaInput"/>
+              <inputs xmi:type="process:ContractInput" xmi:id="_CI_accionPaciente" name="accionPaciente" description="CONFIRMAR, REPROGRAMAR o CANCELAR">
+                <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_accionPaciente"/>
+              </inputs>
+              <inputs xmi:type="process:ContractInput" xmi:id="_CI_motivoOpcional" name="motivoOpcional" description="Motivo opcional de reprogramación o cancelación">
+                <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_motivoOpcional"/>
+              </inputs>
+            </inputs>
+            <constraints xmi:type="process:ContractConstraint" xmi:id="_CC_Regla_Accion_Valida" expression="[&apos;CONFIRMAR&apos;, &apos;REPROGRAMAR&apos;, &apos;CANCELAR&apos;].contains(respuestaInput.accionPaciente)" errorMessage="La respuesta al recordatorio debe ser CONFIRMAR, REPROGRAMAR o CANCELAR." name="Regla_Accion_Valida">
+              <inputNames>respuestaInput</inputNames>
+            </constraints>
+          </contract>
+          <expectedDuration xmi:type="expression:Expression" xmi:id="_ED_Task_Responder" name="" content="" returnType="java.lang.Long" returnTypeFixed="true"/>
+        </elements>
+      </elements>
+      <elements xmi:type="process:Lane" xmi:id="_Lane_Auxiliar" name="Auxiliar de agendamiento (Excepciones)" actor="_Actor_Auxiliar">
+        <elements xmi:type="process:XORGateway" xmi:id="_GW_JoinExcepcion" name="Convergencia Excepción" outgoing="_Flow_F_ToExcepcion" incoming="_Flow_F_Datos_No _Flow_F_EPS_No _Flow_F_Espacio_No">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_GW_JoinExcepcion" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_GW_JoinExcepcion" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_GW_JoinExcepcion" name="" content="" returnTypeFixed="true"/>
+        </elements>
+        <elements xmi:type="process:Task" xmi:id="_Task_Excepcion" documentation="Tarea Humana asignada al rol Auxiliar de Agendamiento en Bonita Portal. Permite completar datos faltantes, gestionar autorizaciones especiales o asignar cupo manual." name="Atender excepción con el paciente" outgoing="_Flow_F10" incoming="_Flow_F_ToExcepcion" overrideActorsOfTheLane="false" actor="_Actor_Auxiliar">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_Task_Excepcion" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_Task_Excepcion" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_Task_Excepcion" name="" content="" returnTypeFixed="true"/>
+          <operations xmi:type="expression:Operation" xmi:id="_Op_Excepcion_Cita">
+            <leftOperand xmi:type="expression:Expression" xmi:id="_LO_Excepcion_Cita" name="citaMedica" content="citaMedica" type="TYPE_VARIABLE" returnType="co.edu.eafit.ips.model.CitaMedica">
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Excepcion_Cita" name="citaMedica" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CitaMedica"/>
+            </leftOperand>
+            <rightOperand xmi:type="expression:Expression" xmi:id="_RO_Excepcion_Cita" name="procesarResolucionAuxiliar()" content="import co.edu.eafit.ips.model.CitaMedica&#xD;&#xA;import java.time.OffsetDateTime&#xD;&#xA;import java.time.ZoneOffset&#xD;&#xA;&#xD;&#xA;def ahora = OffsetDateTime.now(ZoneOffset.ofHours(-5))&#xD;&#xA;solicitudCita.observacionesAuxiliar = resolucionAuxiliarInput?.observaciones&#xD;&#xA;&#xD;&#xA;if (resolucionAuxiliarInput?.numeroDocumentoCorregido) {&#xD;&#xA;    solicitudCita.paciente.numeroDocumento = resolucionAuxiliarInput.numeroDocumentoCorregido.trim()&#xD;&#xA;}&#xD;&#xA;if (resolucionAuxiliarInput?.codigoAutorizacionManual) {&#xD;&#xA;    solicitudCita.codigoAutorizacionEPS = resolucionAuxiliarInput.codigoAutorizacionManual.trim()&#xD;&#xA;    solicitudCita.autorizacionVigente = true&#xD;&#xA;}&#xD;&#xA;&#xD;&#xA;if (resolucionAuxiliarInput?.logroAgendar == true) {&#xD;&#xA;    solicitudCita.estadoSolicitud = &quot;AGENDADA&quot;&#xD;&#xA;    def citaManual = (citaMedica != null) ? citaMedica : new CitaMedica()&#xD;&#xA;    citaManual.codigoCita = &quot;CITA-MAN-${solicitudCita.codigoRadicado.replace(&apos;IPS-&apos;, &apos;&apos;)}&quot;&#xD;&#xA;    citaManual.fechaHoraCita = resolucionAuxiliarInput.fechaHoraAsignada ?: ahora.plusDays(2)&#xD;&#xA;    citaManual.especialidad = resolucionAuxiliarInput.especialidadAsignada ?: (solicitudCita.especialidadRequerida ?: &quot;MEDICINA GENERAL&quot;)&#xD;&#xA;    citaManual.nombreMedico = resolucionAuxiliarInput.medicoAsignado ?: &quot;Dr. Turno Central&quot;&#xD;&#xA;    citaManual.consultorio = resolucionAuxiliarInput.consultorioAsignado ?: &quot;101&quot;&#xD;&#xA;    citaManual.sedeIPS = resolucionAuxiliarInput.sedeAsignada ?: &quot;Sede Principal&quot;&#xD;&#xA;    citaManual.estado = &quot;AGENDADA&quot;&#xD;&#xA;    citaManual.asignadaPorAuxiliar = true&#xD;&#xA;    citaManual.confirmacionEnviada = false&#xD;&#xA;    citaManual.recordatorioEnviado = false&#xD;&#xA;    citaManual.fechaRegistro = ahora&#xD;&#xA;    citaManual.paciente = solicitudCita.paciente&#xD;&#xA;    citaManual.solicitudOrigen = solicitudCita&#xD;&#xA;    return citaManual&#xD;&#xA;} else {&#xD;&#xA;    solicitudCita.estadoSolicitud = &quot;RECHAZADA&quot;&#xD;&#xA;    return null&#xD;&#xA;}" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="co.edu.eafit.ips.model.CitaMedica">
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Excepcion_Sol" name="solicitudCita" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.SolicitudCita"/>
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Excepcion_Cita2" name="citaMedica" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CitaMedica"/>
+              <referencedElements xmi:type="process:ContractInput" xmi:id="_Ref_CI_resolucionAuxiliarInput" name="resolucionAuxiliarInput" type="COMPLEX"/>
+            </rightOperand>
+            <operator xmi:type="expression:Operator" xmi:id="_Opr_Excepcion_Cita" type="ASSIGNMENT"/>
+          </operations>
+          <loopCondition xmi:type="expression:Expression" xmi:id="_LC_Task_Excepcion" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+          <loopMaximum xmi:type="expression:Expression" xmi:id="_LM_Task_Excepcion" name="" content="" returnType="java.lang.Integer" returnTypeFixed="true"/>
+          <cardinalityExpression xmi:type="expression:Expression" xmi:id="_CE_Task_Excepcion" name="" content="" returnType="java.lang.Integer" returnTypeFixed="true"/>
+          <iteratorExpression xmi:type="expression:Expression" xmi:id="_IE_Task_Excepcion" name="multiInstanceIterator" content="multiInstanceIterator" type="MULTIINSTANCE_ITERATOR_TYPE" returnType="java.lang.Object" returnTypeFixed="true"/>
+          <completionCondition xmi:type="expression:Expression" xmi:id="_CC_Task_Excepcion" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+          <formMapping xmi:type="process:FormMapping" xmi:id="_FM_Task_Excepcion" type="NONE">
+            <targetForm xmi:type="expression:Expression" xmi:id="_TF_Task_Excepcion" name="" content="" type="FORM_REFERENCE_TYPE" returnTypeFixed="true"/>
+          </formMapping>
+          <contract xmi:type="process:Contract" xmi:id="_Contract_Task_Excepcion">
+            <inputs xmi:type="process:ContractInput" xmi:id="_CI_resolucionAuxiliarInput" name="resolucionAuxiliarInput" type="COMPLEX" description="Datos de resolución manual por el Auxiliar de Agendamiento">
+              <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_resolucionAuxiliarInput"/>
+              <inputs xmi:type="process:ContractInput" xmi:id="_CI_logroAgendar" name="logroAgendar" type="BOOLEAN">
+                <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_logroAgendar"/>
+              </inputs>
+              <inputs xmi:type="process:ContractInput" xmi:id="_CI_numeroDocumentoCorregido" name="numeroDocumentoCorregido">
+                <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_numeroDocumentoCorregido"/>
+              </inputs>
+              <inputs xmi:type="process:ContractInput" xmi:id="_CI_codigoAutorizacionManual" name="codigoAutorizacionManual">
+                <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_codigoAutorizacionManual"/>
+              </inputs>
+              <inputs xmi:type="process:ContractInput" xmi:id="_CI_especialidadAsignada" name="especialidadAsignada">
+                <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_especialidadAsignada"/>
+              </inputs>
+              <inputs xmi:type="process:ContractInput" xmi:id="_CI_medicoAsignado" name="medicoAsignado">
+                <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_medicoAsignado"/>
+              </inputs>
+              <inputs xmi:type="process:ContractInput" xmi:id="_CI_sedeAsignada" name="sedeAsignada">
+                <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_sedeAsignada"/>
+              </inputs>
+              <inputs xmi:type="process:ContractInput" xmi:id="_CI_consultorioAsignado" name="consultorioAsignado">
+                <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_consultorioAsignado"/>
+              </inputs>
+              <inputs xmi:type="process:ContractInput" xmi:id="_CI_fechaHoraAsignada" name="fechaHoraAsignada" type="OFFSETDATETIME">
+                <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_fechaHoraAsignada"/>
+              </inputs>
+              <inputs xmi:type="process:ContractInput" xmi:id="_CI_observaciones" name="observaciones">
+                <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_observaciones"/>
+              </inputs>
+            </inputs>
+            <constraints xmi:type="process:ContractConstraint" xmi:id="_CC_Regla_Cita_Manual" expression="!resolucionAuxiliarInput.logroAgendar || (resolucionAuxiliarInput.especialidadAsignada != null &amp;&amp; resolucionAuxiliarInput.medicoAsignado != null &amp;&amp; resolucionAuxiliarInput.fechaHoraAsignada != null)" errorMessage="Si marca que logró agendar la cita manualmente, debe indicar especialidad, médico y fecha/hora asignada." name="Regla_Datos_Cita_Manual_Obligatorios">
+              <inputNames>resolucionAuxiliarInput</inputNames>
+            </constraints>
+          </contract>
+          <expectedDuration xmi:type="expression:Expression" xmi:id="_ED_Task_Excepcion" name="" content="" returnType="java.lang.Long" returnTypeFixed="true"/>
+        </elements>
+        <elements xmi:type="process:XORGateway" xmi:id="_GW_ResolucionAuxiliar" name="¿Agendada?" outgoing="_Flow_F_Aux_Cerrado _Flow_F_Aux_Agendada" incoming="_Flow_F10">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_GW_ResolucionAuxiliar" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_GW_ResolucionAuxiliar" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_GW_ResolucionAuxiliar" name="" content="" returnTypeFixed="true"/>
+        </elements>
+      </elements>
+      <elements xmi:type="process:Lane" xmi:id="_Lane_Orquestador" name="Motor Bonita BPMS (Orquestación)" actor="_Actor_Auxiliar">
+        <elements xmi:type="process:XORGateway" xmi:id="_GW_DatosIA" name="¿Datos completos?" outgoing="_Flow_F_Datos_Si _Flow_F_Datos_No" incoming="_Flow_F02">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_GW_DatosIA" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_GW_DatosIA" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_GW_DatosIA" name="" content="" returnTypeFixed="true"/>
+        </elements>
+        <elements xmi:type="process:XORGateway" xmi:id="_GW_EPS" name="¿Activo y autorizado?" outgoing="_Flow_F_EPS_Si _Flow_F_EPS_No" incoming="_Flow_F04">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_GW_EPS" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_GW_EPS" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_GW_EPS" name="" content="" returnTypeFixed="true"/>
+        </elements>
+        <elements xmi:type="process:XORGateway" xmi:id="_GW_Espacio" name="¿Hay cupo?" outgoing="_Flow_F_Espacio_Si _Flow_F_Espacio_No" incoming="_Flow_F07">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_GW_Espacio" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_GW_Espacio" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_GW_Espacio" name="" content="" returnTypeFixed="true"/>
+        </elements>
+        <elements xmi:type="process:XORGateway" xmi:id="_GW_JoinConfirmar" name="Convergencia Confirmación" outgoing="_Flow_F_ToConfirmar" incoming="_Flow_F_Aux_Agendada _Flow_F11">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_GW_JoinConfirmar" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_GW_JoinConfirmar" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_GW_JoinConfirmar" name="" content="" returnTypeFixed="true"/>
+        </elements>
+        <elements xmi:type="process:ServiceTask" xmi:id="_Task_Confirmar" documentation="Conector REST / Correo que envía inmediatamente los datos de confirmación de la cita (fecha, hora, médico, sede y recomendaciones) por el canal del paciente." name="Enviar confirmación de cita" outgoing="_Flow_F12" incoming="_Flow_F_ToConfirmar">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_Task_Confirmar" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_Task_Confirmar" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_Task_Confirmar" name="" content="" returnTypeFixed="true"/>
+          <operations xmi:type="expression:Operation" xmi:id="_Op_Confirmar_Cita">
+            <leftOperand xmi:type="expression:Expression" xmi:id="_LO_Confirmar_Cita" name="citaMedica" content="citaMedica" type="TYPE_VARIABLE" returnType="co.edu.eafit.ips.model.CitaMedica">
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Confirmar_Cita" name="citaMedica" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CitaMedica"/>
+            </leftOperand>
+            <rightOperand xmi:type="expression:Expression" xmi:id="_RO_Confirmar_Cita" name="enviarCorreoConfirmacion()" content="import java.time.OffsetDateTime&#xD;&#xA;import java.time.ZoneOffset&#xD;&#xA;import java.time.format.DateTimeFormatter&#xD;&#xA;&#xD;&#xA;if (citaMedica != null) {&#xD;&#xA;    citaMedica.confirmacionEnviada = true&#xD;&#xA;    citaMedica.fechaActualizacion = OffsetDateTime.now(ZoneOffset.ofHours(-5))&#xD;&#xA;}&#xD;&#xA;def fmt = DateTimeFormatter.ofPattern(&quot;EEEE d &apos;de&apos; MMMM yyyy &apos;a las&apos; HH:mm&quot;, new Locale(&apos;es&apos;, &apos;CO&apos;))&#xD;&#xA;def cuando = citaMedica?.fechaHoraCita ? citaMedica.fechaHoraCita.format(fmt) : &apos;por confirmar&apos;&#xD;&#xA;def nombre = solicitudCita?.paciente?.nombreCompleto ?: &apos;Paciente&apos;&#xD;&#xA;String asuntoCorreo = &quot;Confirmación de cita médica - ${citaMedica?.codigoCita}&quot;&#xD;&#xA;String htmlCorreo = &quot;&quot;&quot;&lt;html&gt;&lt;body style=&apos;font-family:Arial,sans-serif;color:#1e293b&apos;&gt;&#xD;&#xA;&lt;h2 style=&apos;color:#0f766e&apos;&gt;Su cita médica ha sido confirmada&lt;/h2&gt;&#xD;&#xA;&lt;p&gt;Hola &lt;b&gt;${nombre}&lt;/b&gt;,&lt;/p&gt;&#xD;&#xA;&lt;p&gt;Su solicitud con radicado &lt;b&gt;${solicitudCita?.codigoRadicado}&lt;/b&gt; fue agendada exitosamente:&lt;/p&gt;&#xD;&#xA;&lt;ul&gt;&#xD;&#xA;&lt;li&gt;&lt;b&gt;Código de cita:&lt;/b&gt; ${citaMedica?.codigoCita}&lt;/li&gt;&#xD;&#xA;&lt;li&gt;&lt;b&gt;Especialidad:&lt;/b&gt; ${citaMedica?.especialidad}&lt;/li&gt;&#xD;&#xA;&lt;li&gt;&lt;b&gt;Fecha y hora:&lt;/b&gt; ${cuando}&lt;/li&gt;&#xD;&#xA;&lt;li&gt;&lt;b&gt;Médico:&lt;/b&gt; ${citaMedica?.nombreMedico}&lt;/li&gt;&#xD;&#xA;&lt;li&gt;&lt;b&gt;Sede / Consultorio:&lt;/b&gt; ${citaMedica?.sedeIPS} - Consultorio ${citaMedica?.consultorio}&lt;/li&gt;&#xD;&#xA;&lt;/ul&gt;&#xD;&#xA;&lt;p&gt;Recibirá un recordatorio 24 horas antes para confirmar, reprogramar o cancelar su asistencia.&lt;/p&gt;&#xD;&#xA;&lt;p&gt;&lt;b&gt;IPS Salud - Central de Citas&lt;/b&gt;&lt;/p&gt;&#xD;&#xA;&lt;/body&gt;&lt;/html&gt;&quot;&quot;&quot;&#xD;&#xA;&#xD;&#xA;try {&#xD;&#xA;    String host = (binding.hasVariable(&apos;smtpHost&apos;) &amp;&amp; smtpHost) ? smtpHost : &apos;localhost&apos;&#xD;&#xA;    int port = (binding.hasVariable(&apos;smtpPort&apos;) &amp;&amp; smtpPort != null) ? (smtpPort as int) : 1025&#xD;&#xA;    String fromAddr = (binding.hasVariable(&apos;smtpFrom&apos;) &amp;&amp; smtpFrom) ? smtpFrom : &apos;citas@ips-salud.co&apos;&#xD;&#xA;    String toAddr = solicitudCita?.paciente?.correoElectronico ?: &apos;paciente@ips-salud.co&apos;&#xD;&#xA;    boolean useSsl = (binding.hasVariable(&apos;smtpSsl&apos;) &amp;&amp; smtpSsl == true)&#xD;&#xA;    Socket sock = useSsl&#xD;&#xA;        ? javax.net.ssl.SSLSocketFactory.default.createSocket(host, port)&#xD;&#xA;        : new Socket()&#xD;&#xA;    if (!useSsl) {&#xD;&#xA;        sock.connect(new java.net.InetSocketAddress(host, port), 4000)&#xD;&#xA;    }&#xD;&#xA;    sock.soTimeout = 4000&#xD;&#xA;    def reader = new BufferedReader(new InputStreamReader(sock.inputStream, &apos;UTF-8&apos;))&#xD;&#xA;    def writer = new OutputStreamWriter(sock.outputStream, &apos;UTF-8&apos;)&#xD;&#xA;    def sendCmd = { String cmd -&gt;&#xD;&#xA;        writer.write(cmd + &quot;\r\n&quot;)&#xD;&#xA;        writer.flush()&#xD;&#xA;        return reader.readLine()&#xD;&#xA;    }&#xD;&#xA;    reader.readLine()&#xD;&#xA;    sendCmd(&quot;EHLO ips-salud.co&quot;)&#xD;&#xA;    while (reader.ready()) { reader.readLine() }&#xD;&#xA;    if (binding.hasVariable(&apos;smtpUser&apos;) &amp;&amp; smtpUser &amp;&amp; smtpUser != &apos;-&apos;) {&#xD;&#xA;        String token = (&quot;\0&quot; + smtpUser + &quot;\0&quot; + (smtpPassword ?: &apos;&apos;)).bytes.encodeBase64().toString()&#xD;&#xA;        sendCmd(&quot;AUTH PLAIN &quot; + token)&#xD;&#xA;    }&#xD;&#xA;    sendCmd(&quot;MAIL FROM:&lt;&quot; + fromAddr + &quot;&gt;&quot;)&#xD;&#xA;    sendCmd(&quot;RCPT TO:&lt;&quot; + toAddr + &quot;&gt;&quot;)&#xD;&#xA;    sendCmd(&quot;DATA&quot;)&#xD;&#xA;    String mime = &quot;From: IPS Salud - Central de Citas &lt;&quot; + fromAddr + &quot;&gt;\r\n&quot; +&#xD;&#xA;                  &quot;To: &lt;&quot; + toAddr + &quot;&gt;\r\n&quot; +&#xD;&#xA;                  &quot;Subject: =?UTF-8?B?&quot; + asuntoCorreo.getBytes(&apos;UTF-8&apos;).encodeBase64().toString() + &quot;?=\r\n&quot; +&#xD;&#xA;                  &quot;MIME-Version: 1.0\r\n&quot; +&#xD;&#xA;                  &quot;Content-Type: text/html; charset=UTF-8\r\n\r\n&quot; +&#xD;&#xA;                  htmlCorreo + &quot;\r\n.&quot;&#xD;&#xA;    sendCmd(mime)&#xD;&#xA;    sendCmd(&quot;QUIT&quot;)&#xD;&#xA;    sock.close()&#xD;&#xA;} catch (Throwable _mailErr) {&#xD;&#xA;    java.util.logging.Logger.getLogger(&quot;IPS_Correo&quot;).warning(&quot;Aviso SMTP: &quot; + _mailErr.message)&#xD;&#xA;}&#xD;&#xA;&#xD;&#xA;return citaMedica" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="co.edu.eafit.ips.model.CitaMedica">
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Confirmar_Cita2" name="citaMedica" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CitaMedica"/>
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Confirmar_Sol" name="solicitudCita" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.SolicitudCita"/>
+              <referencedElements xmi:type="parameter:Parameter" xmi:id="_Ref_Conf_smtpHost" name="smtpHost" typeClassname="java.lang.String"/>
+              <referencedElements xmi:type="parameter:Parameter" xmi:id="_Ref_Conf_smtpPort" name="smtpPort" typeClassname="java.lang.Integer"/>
+              <referencedElements xmi:type="parameter:Parameter" xmi:id="_Ref_Conf_smtpSsl" name="smtpSsl" typeClassname="java.lang.Boolean"/>
+              <referencedElements xmi:type="parameter:Parameter" xmi:id="_Ref_Conf_smtpStarttls" name="smtpStarttls" typeClassname="java.lang.Boolean"/>
+              <referencedElements xmi:type="parameter:Parameter" xmi:id="_Ref_Conf_smtpUser" name="smtpUser" typeClassname="java.lang.String"/>
+              <referencedElements xmi:type="parameter:Parameter" xmi:id="_Ref_Conf_smtpPassword" name="smtpPassword" typeClassname="java.lang.String"/>
+              <referencedElements xmi:type="parameter:Parameter" xmi:id="_Ref_Conf_smtpFrom" name="smtpFrom" typeClassname="java.lang.String"/>
+            </rightOperand>
+            <operator xmi:type="expression:Operator" xmi:id="_Opr_Confirmar_Cita" type="ASSIGNMENT"/>
+          </operations>
+          <loopCondition xmi:type="expression:Expression" xmi:id="_LC_Task_Confirmar" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+          <loopMaximum xmi:type="expression:Expression" xmi:id="_LM_Task_Confirmar" name="" content="" returnType="java.lang.Integer" returnTypeFixed="true"/>
+          <cardinalityExpression xmi:type="expression:Expression" xmi:id="_CE_Task_Confirmar" name="" content="" returnType="java.lang.Integer" returnTypeFixed="true"/>
+          <iteratorExpression xmi:type="expression:Expression" xmi:id="_IE_Task_Confirmar" name="multiInstanceIterator" content="multiInstanceIterator" type="MULTIINSTANCE_ITERATOR_TYPE" returnType="java.lang.Object" returnTypeFixed="true"/>
+          <completionCondition xmi:type="expression:Expression" xmi:id="_CC_Task_Confirmar" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+        </elements>
+        <elements xmi:type="process:IntermediateCatchTimerEvent" xmi:id="_Timer_24hAntes" documentation="Evento Intermedio Temporizador (Timer Catch Event) calculado dinámicamente como fechaHoraCita menos 24 horas." name="24 h antes de la cita" outgoing="_Flow_F12b" incoming="_Flow_F12">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_Timer_24hAntes" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_Timer_24hAntes" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_Timer_24hAntes" name="" content="" returnTypeFixed="true"/>
+          <condition xmi:type="expression:Expression" xmi:id="_Cond_Timer_24hAntes" name="calcularFechaRecordatorio24h()" content="def ahoraMasUnMin = java.time.Instant.now().plusSeconds(15)&#xD;&#xA;if (citaMedica != null &amp;&amp; citaMedica.fechaHoraCita != null) {&#xD;&#xA;    def instanteRecordatorio = citaMedica.fechaHoraCita.minusHours(24).toInstant()&#xD;&#xA;    return java.util.Date.from(instanteRecordatorio.isAfter(ahoraMasUnMin) ? instanteRecordatorio : ahoraMasUnMin)&#xD;&#xA;}&#xD;&#xA;return java.util.Date.from(ahoraMasUnMin)" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="java.util.Date" returnTypeFixed="true">
+            <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Timer_Cita" name="citaMedica" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CitaMedica"/>
+          </condition>
+        </elements>
+        <elements xmi:type="process:ServiceTask" xmi:id="_Task_Recordatorio" documentation="Envía notificación interactiva 24 h antes solicitando al paciente confirmar asistencia, reprogramar o cancelar la cita." name="Enviar recordatorio de asistencia" outgoing="_Flow_F13" incoming="_Flow_F12b">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_Task_Recordatorio" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_Task_Recordatorio" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_Task_Recordatorio" name="" content="" returnTypeFixed="true"/>
+          <operations xmi:type="expression:Operation" xmi:id="_Op_Recordatorio_Cita">
+            <leftOperand xmi:type="expression:Expression" xmi:id="_LO_Recordatorio_Cita" name="citaMedica" content="citaMedica" type="TYPE_VARIABLE" returnType="co.edu.eafit.ips.model.CitaMedica">
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Recordatorio_Cita" name="citaMedica" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CitaMedica"/>
+            </leftOperand>
+            <rightOperand xmi:type="expression:Expression" xmi:id="_RO_Recordatorio_Cita" name="enviarCorreoRecordatorio()" content="import java.time.OffsetDateTime&#xD;&#xA;import java.time.ZoneOffset&#xD;&#xA;import java.time.format.DateTimeFormatter&#xD;&#xA;&#xD;&#xA;if (citaMedica != null) {&#xD;&#xA;    citaMedica.recordatorioEnviado = true&#xD;&#xA;    citaMedica.fechaActualizacion = OffsetDateTime.now(ZoneOffset.ofHours(-5))&#xD;&#xA;}&#xD;&#xA;def fmt = DateTimeFormatter.ofPattern(&quot;EEEE d &apos;de&apos; MMMM yyyy &apos;a las&apos; HH:mm&quot;, new Locale(&apos;es&apos;, &apos;CO&apos;))&#xD;&#xA;def cuando = citaMedica?.fechaHoraCita ? citaMedica.fechaHoraCita.format(fmt) : &apos;por confirmar&apos;&#xD;&#xA;def nombre = solicitudCita?.paciente?.nombreCompleto ?: &apos;Paciente&apos;&#xD;&#xA;String asuntoCorreo = &quot;Recordatorio de cita médica (24h antes) - ${citaMedica?.codigoCita}&quot;&#xD;&#xA;String htmlCorreo = &quot;&quot;&quot;&lt;html&gt;&lt;body style=&apos;font-family:Arial,sans-serif;color:#1e293b&apos;&gt;&#xD;&#xA;&lt;h2 style=&apos;color:#0f766e&apos;&gt;Recordatorio: su cita médica es en 24 horas&lt;/h2&gt;&#xD;&#xA;&lt;p&gt;Hola &lt;b&gt;${nombre}&lt;/b&gt;,&lt;/p&gt;&#xD;&#xA;&lt;p&gt;Le recordamos su cita de &lt;b&gt;${citaMedica?.especialidad}&lt;/b&gt; programada para el &lt;b&gt;${cuando}&lt;/b&gt; con ${citaMedica?.nombreMedico} en ${citaMedica?.sedeIPS} (Consultorio ${citaMedica?.consultorio}).&lt;/p&gt;&#xD;&#xA;&lt;p&gt;Por favor responda desde el Portal de Bonita (tarea &lt;i&gt;Responder recordatorio&lt;/i&gt;) o por el canal de contacto: &lt;b&gt;CONFIRMAR&lt;/b&gt;, &lt;b&gt;REPROGRAMAR&lt;/b&gt; o &lt;b&gt;CANCELAR&lt;/b&gt;.&lt;/p&gt;&#xD;&#xA;&lt;p&gt;&lt;b&gt;IPS Salud - Central de Citas&lt;/b&gt;&lt;/p&gt;&#xD;&#xA;&lt;/body&gt;&lt;/html&gt;&quot;&quot;&quot;&#xD;&#xA;&#xD;&#xA;try {&#xD;&#xA;    String host = (binding.hasVariable(&apos;smtpHost&apos;) &amp;&amp; smtpHost) ? smtpHost : &apos;localhost&apos;&#xD;&#xA;    int port = (binding.hasVariable(&apos;smtpPort&apos;) &amp;&amp; smtpPort != null) ? (smtpPort as int) : 1025&#xD;&#xA;    String fromAddr = (binding.hasVariable(&apos;smtpFrom&apos;) &amp;&amp; smtpFrom) ? smtpFrom : &apos;citas@ips-salud.co&apos;&#xD;&#xA;    String toAddr = solicitudCita?.paciente?.correoElectronico ?: &apos;paciente@ips-salud.co&apos;&#xD;&#xA;    boolean useSsl = (binding.hasVariable(&apos;smtpSsl&apos;) &amp;&amp; smtpSsl == true)&#xD;&#xA;    Socket sock = useSsl&#xD;&#xA;        ? javax.net.ssl.SSLSocketFactory.default.createSocket(host, port)&#xD;&#xA;        : new Socket()&#xD;&#xA;    if (!useSsl) {&#xD;&#xA;        sock.connect(new java.net.InetSocketAddress(host, port), 4000)&#xD;&#xA;    }&#xD;&#xA;    sock.soTimeout = 4000&#xD;&#xA;    def reader = new BufferedReader(new InputStreamReader(sock.inputStream, &apos;UTF-8&apos;))&#xD;&#xA;    def writer = new OutputStreamWriter(sock.outputStream, &apos;UTF-8&apos;)&#xD;&#xA;    def sendCmd = { String cmd -&gt;&#xD;&#xA;        writer.write(cmd + &quot;\r\n&quot;)&#xD;&#xA;        writer.flush()&#xD;&#xA;        return reader.readLine()&#xD;&#xA;    }&#xD;&#xA;    reader.readLine()&#xD;&#xA;    sendCmd(&quot;EHLO ips-salud.co&quot;)&#xD;&#xA;    while (reader.ready()) { reader.readLine() }&#xD;&#xA;    if (binding.hasVariable(&apos;smtpUser&apos;) &amp;&amp; smtpUser &amp;&amp; smtpUser != &apos;-&apos;) {&#xD;&#xA;        String token = (&quot;\0&quot; + smtpUser + &quot;\0&quot; + (smtpPassword ?: &apos;&apos;)).bytes.encodeBase64().toString()&#xD;&#xA;        sendCmd(&quot;AUTH PLAIN &quot; + token)&#xD;&#xA;    }&#xD;&#xA;    sendCmd(&quot;MAIL FROM:&lt;&quot; + fromAddr + &quot;&gt;&quot;)&#xD;&#xA;    sendCmd(&quot;RCPT TO:&lt;&quot; + toAddr + &quot;&gt;&quot;)&#xD;&#xA;    sendCmd(&quot;DATA&quot;)&#xD;&#xA;    String mime = &quot;From: IPS Salud - Central de Citas &lt;&quot; + fromAddr + &quot;&gt;\r\n&quot; +&#xD;&#xA;                  &quot;To: &lt;&quot; + toAddr + &quot;&gt;\r\n&quot; +&#xD;&#xA;                  &quot;Subject: =?UTF-8?B?&quot; + asuntoCorreo.getBytes(&apos;UTF-8&apos;).encodeBase64().toString() + &quot;?=\r\n&quot; +&#xD;&#xA;                  &quot;MIME-Version: 1.0\r\n&quot; +&#xD;&#xA;                  &quot;Content-Type: text/html; charset=UTF-8\r\n\r\n&quot; +&#xD;&#xA;                  htmlCorreo + &quot;\r\n.&quot;&#xD;&#xA;    sendCmd(mime)&#xD;&#xA;    sendCmd(&quot;QUIT&quot;)&#xD;&#xA;    sock.close()&#xD;&#xA;} catch (Throwable _mailErr) {&#xD;&#xA;    java.util.logging.Logger.getLogger(&quot;IPS_Correo&quot;).warning(&quot;Aviso SMTP: &quot; + _mailErr.message)&#xD;&#xA;}&#xD;&#xA;&#xD;&#xA;return citaMedica" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="co.edu.eafit.ips.model.CitaMedica">
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Recordatorio_Cita2" name="citaMedica" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CitaMedica"/>
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Recordatorio_Sol" name="solicitudCita" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.SolicitudCita"/>
+              <referencedElements xmi:type="parameter:Parameter" xmi:id="_Ref_Rec_smtpHost" name="smtpHost" typeClassname="java.lang.String"/>
+              <referencedElements xmi:type="parameter:Parameter" xmi:id="_Ref_Rec_smtpPort" name="smtpPort" typeClassname="java.lang.Integer"/>
+              <referencedElements xmi:type="parameter:Parameter" xmi:id="_Ref_Rec_smtpSsl" name="smtpSsl" typeClassname="java.lang.Boolean"/>
+              <referencedElements xmi:type="parameter:Parameter" xmi:id="_Ref_Rec_smtpStarttls" name="smtpStarttls" typeClassname="java.lang.Boolean"/>
+              <referencedElements xmi:type="parameter:Parameter" xmi:id="_Ref_Rec_smtpUser" name="smtpUser" typeClassname="java.lang.String"/>
+              <referencedElements xmi:type="parameter:Parameter" xmi:id="_Ref_Rec_smtpPassword" name="smtpPassword" typeClassname="java.lang.String"/>
+              <referencedElements xmi:type="parameter:Parameter" xmi:id="_Ref_Rec_smtpFrom" name="smtpFrom" typeClassname="java.lang.String"/>
+            </rightOperand>
+            <operator xmi:type="expression:Operator" xmi:id="_Opr_Recordatorio_Cita" type="ASSIGNMENT"/>
+          </operations>
+          <loopCondition xmi:type="expression:Expression" xmi:id="_LC_Task_Recordatorio" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+          <loopMaximum xmi:type="expression:Expression" xmi:id="_LM_Task_Recordatorio" name="" content="" returnType="java.lang.Integer" returnTypeFixed="true"/>
+          <cardinalityExpression xmi:type="expression:Expression" xmi:id="_CE_Task_Recordatorio" name="" content="" returnType="java.lang.Integer" returnTypeFixed="true"/>
+          <iteratorExpression xmi:type="expression:Expression" xmi:id="_IE_Task_Recordatorio" name="multiInstanceIterator" content="multiInstanceIterator" type="MULTIINSTANCE_ITERATOR_TYPE" returnType="java.lang.Object" returnTypeFixed="true"/>
+          <completionCondition xmi:type="expression:Expression" xmi:id="_CC_Task_Recordatorio" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+        </elements>
+        <elements xmi:type="process:XORGateway" xmi:id="_GW_Respuesta" name="¿Respuesta?" outgoing="_Flow_F_Resp_Confirma _Flow_F_Resp_Cancela _Flow_F_Resp_Reprograma" incoming="_Flow_F14">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_GW_Respuesta" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_GW_Respuesta" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_GW_Respuesta" name="" content="" returnTypeFixed="true"/>
+        </elements>
+        <elements xmi:type="process:EndEvent" xmi:id="_End_Confirmada" documentation="Cita confirmada exitosamente por el paciente tras el recordatorio 24 h antes." name="Cita confirmada" incoming="_Flow_F_Resp_Confirma">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_End_Confirmada" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_End_Confirmada" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_End_Confirmada" name="" content="" returnTypeFixed="true"/>
+        </elements>
+      </elements>
+      <elements xmi:type="process:Lane" xmi:id="_Lane_IA" name="Componente IA (Conector REST LLM)" actor="_Actor_Auxiliar">
+        <elements xmi:type="process:ServiceTask" xmi:id="_Task_IA" documentation="Conector REST hacia servicio LLM para extraer tipo/número de documento, EPS, especialidad requerida, urgencia y puntaje de confianza." name="Extraer datos de solicitud (IA)" outgoing="_Flow_F02" incoming="_Flow_F01">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_Task_IA" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_Task_IA" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_Task_IA" name="" content="" returnTypeFixed="true"/>
+          <operations xmi:type="expression:Operation" xmi:id="_Op_Task_IA">
+            <leftOperand xmi:type="expression:Expression" xmi:id="_LO_Task_IA" name="solicitudCita" content="solicitudCita" type="TYPE_VARIABLE" returnType="co.edu.eafit.ips.model.SolicitudCita">
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_IA_Sol" name="solicitudCita" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.SolicitudCita"/>
+            </leftOperand>
+            <rightOperand xmi:type="expression:Expression" xmi:id="_RO_Task_IA" name="procesarExtraccionIA()" content="def pac = solicitudCita.paciente&#xD;&#xA;def msg = (solicitudCita.mensajeOriginal ?: &quot;&quot;).toUpperCase()&#xD;&#xA;&#xD;&#xA;if (msg.contains(&quot;ODONTOLOGIA&quot;) || msg.contains(&quot;ODONTOLOGÍA&quot;)) {&#xD;&#xA;    solicitudCita.especialidadRequerida = &quot;ODONTOLOGIA&quot;&#xD;&#xA;} else if (msg.contains(&quot;PEDIATRIA&quot;) || msg.contains(&quot;PEDIATRÍA&quot;)) {&#xD;&#xA;    solicitudCita.especialidadRequerida = &quot;PEDIATRIA&quot;&#xD;&#xA;} else if (!solicitudCita.especialidadRequerida) {&#xD;&#xA;    solicitudCita.especialidadRequerida = &quot;MEDICINA GENERAL&quot;&#xD;&#xA;}&#xD;&#xA;&#xD;&#xA;solicitudCita.nivelUrgencia = msg.contains(&quot;URGENTE&quot;) ? &quot;ALTA&quot; : &quot;MEDIA&quot;&#xD;&#xA;solicitudCita.jornadaPreferida = msg.contains(&quot;TARDE&quot;) ? &quot;TARDE&quot; : &quot;MANANA&quot;&#xD;&#xA;solicitudCita.confianzaIA = (solicitudCita.mensajeOriginal &amp;&amp; solicitudCita.mensajeOriginal.length() &gt;= 15) ? 0.94d : 0.65d&#xD;&#xA;&#xD;&#xA;boolean camposMinimos = (&#xD;&#xA;    pac.tipoDocumento &amp;&amp; pac.tipoDocumento != &quot;PENDIENTE&quot; &amp;&amp;&#xD;&#xA;    pac.numeroDocumento &amp;&amp; !pac.numeroDocumento.startsWith(&quot;TMP-&quot;) &amp;&amp;&#xD;&#xA;    pac.eps &amp;&amp; pac.eps != &quot;POR_EXTRAER&quot; &amp;&amp;&#xD;&#xA;    solicitudCita.especialidadRequerida&#xD;&#xA;)&#xD;&#xA;&#xD;&#xA;solicitudCita.datosCompletos = camposMinimos&#xD;&#xA;if (camposMinimos &amp;&amp; solicitudCita.confianzaIA &gt;= 0.80d) {&#xD;&#xA;    solicitudCita.estadoSolicitud = &quot;VALIDADA_IA&quot;&#xD;&#xA;    solicitudCita.requiereExcepcion = false&#xD;&#xA;    solicitudCita.motivoExcepcion = null&#xD;&#xA;} else {&#xD;&#xA;    solicitudCita.estadoSolicitud = &quot;EN_EXCEPCION&quot;&#xD;&#xA;    solicitudCita.requiereExcepcion = true&#xD;&#xA;    solicitudCita.motivoExcepcion = &quot;DATOS_INCOMPLETOS_O_BAJA_CONFIANZA_IA&quot;&#xD;&#xA;}&#xD;&#xA;return solicitudCita" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="co.edu.eafit.ips.model.SolicitudCita">
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_IA_Sol2" name="solicitudCita" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.SolicitudCita"/>
+            </rightOperand>
+            <operator xmi:type="expression:Operator" xmi:id="_Opr_Task_IA" type="ASSIGNMENT"/>
+          </operations>
+          <loopCondition xmi:type="expression:Expression" xmi:id="_LC_Task_IA" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+          <loopMaximum xmi:type="expression:Expression" xmi:id="_LM_Task_IA" name="" content="" returnType="java.lang.Integer" returnTypeFixed="true"/>
+          <cardinalityExpression xmi:type="expression:Expression" xmi:id="_CE_Task_IA" name="" content="" returnType="java.lang.Integer" returnTypeFixed="true"/>
+          <iteratorExpression xmi:type="expression:Expression" xmi:id="_IE_Task_IA" name="multiInstanceIterator" content="multiInstanceIterator" type="MULTIINSTANCE_ITERATOR_TYPE" returnType="java.lang.Object" returnTypeFixed="true"/>
+          <completionCondition xmi:type="expression:Expression" xmi:id="_CC_Task_IA" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+        </elements>
+      </elements>
+      <elements xmi:type="process:Lane" xmi:id="_Lane_RPA" name="Bot RPA y Agenda IPS (Conectores)" actor="_Actor_Auxiliar">
+        <elements xmi:type="process:ServiceTask" xmi:id="_Task_VerificarEPS" documentation="Conector REST/Webhook que dispara el Bot RPA para consultar estado de afiliación activa y vigencia de autorización en el portal web de la EPS." name="Verificar paciente en portal EPS (RPA)" outgoing="_Flow_F04" incoming="_Flow_F_Datos_Si">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_Task_VerificarEPS" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_Task_VerificarEPS" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_Task_VerificarEPS" name="" content="" returnTypeFixed="true"/>
+          <operations xmi:type="expression:Operation" xmi:id="_Op_Task_VerificarEPS">
+            <leftOperand xmi:type="expression:Expression" xmi:id="_LO_Task_VerificarEPS" name="solicitudCita" content="solicitudCita" type="TYPE_VARIABLE" returnType="co.edu.eafit.ips.model.SolicitudCita">
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_EPS_Sol" name="solicitudCita" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.SolicitudCita"/>
+            </leftOperand>
+            <rightOperand xmi:type="expression:Expression" xmi:id="_RO_Task_VerificarEPS" name="procesarVerificacionEPS()" content="def p = solicitudCita.paciente&#xD;&#xA;boolean inactivo = (p.eps ?: &quot;&quot;).toUpperCase().contains(&quot;INACTIVA&quot;)&#xD;&#xA;p.activoEPS = !inactivo&#xD;&#xA;p.regimenAfiliacion = p.regimenAfiliacion ?: &quot;CONTRIBUTIVO&quot;&#xD;&#xA;&#xD;&#xA;solicitudCita.autorizacionVigente = !inactivo&#xD;&#xA;solicitudCita.codigoAutorizacionEPS = !inactivo ? (&quot;AUT-EPS-&quot; + solicitudCita.codigoRadicado) : null&#xD;&#xA;&#xD;&#xA;if (p.activoEPS &amp;&amp; solicitudCita.autorizacionVigente) {&#xD;&#xA;    solicitudCita.estadoSolicitud = &quot;VERIFICADA_EPS&quot;&#xD;&#xA;    solicitudCita.requiereExcepcion = false&#xD;&#xA;    solicitudCita.motivoExcepcion = null&#xD;&#xA;} else {&#xD;&#xA;    solicitudCita.estadoSolicitud = &quot;EN_EXCEPCION&quot;&#xD;&#xA;    solicitudCita.requiereExcepcion = true&#xD;&#xA;    solicitudCita.motivoExcepcion = &quot;AFILIACION_O_AUTORIZACION_NO_VIGENTE_EPS&quot;&#xD;&#xA;}&#xD;&#xA;return solicitudCita" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="co.edu.eafit.ips.model.SolicitudCita">
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_EPS_Sol2" name="solicitudCita" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.SolicitudCita"/>
+            </rightOperand>
+            <operator xmi:type="expression:Operator" xmi:id="_Opr_Task_VerificarEPS" type="ASSIGNMENT"/>
+          </operations>
+          <loopCondition xmi:type="expression:Expression" xmi:id="_LC_Task_VerificarEPS" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+          <loopMaximum xmi:type="expression:Expression" xmi:id="_LM_Task_VerificarEPS" name="" content="" returnType="java.lang.Integer" returnTypeFixed="true"/>
+          <cardinalityExpression xmi:type="expression:Expression" xmi:id="_CE_Task_VerificarEPS" name="" content="" returnType="java.lang.Integer" returnTypeFixed="true"/>
+          <iteratorExpression xmi:type="expression:Expression" xmi:id="_IE_Task_VerificarEPS" name="multiInstanceIterator" content="multiInstanceIterator" type="MULTIINSTANCE_ITERATOR_TYPE" returnType="java.lang.Object" returnTypeFixed="true"/>
+          <completionCondition xmi:type="expression:Expression" xmi:id="_CC_Task_VerificarEPS" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+        </elements>
+        <elements xmi:type="process:XORGateway" xmi:id="_GW_JoinBusqueda" name="Convergencia Búsqueda" outgoing="_Flow_F_ToBuscar" incoming="_Flow_F_EPS_Si _Flow_F_Resp_Reprograma">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_GW_JoinBusqueda" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_GW_JoinBusqueda" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_GW_JoinBusqueda" name="" content="" returnTypeFixed="true"/>
+        </elements>
+        <elements xmi:type="process:ServiceTask" xmi:id="_Task_BuscarEspacio" documentation="Consulta BDM / Conector JDBC sobre sistema de agenda médica IPS para localizar el próximo cupo disponible en la especialidad solicitada evitando cruce de citas." name="Buscar cupo en agenda IPS" outgoing="_Flow_F07" incoming="_Flow_F_ToBuscar">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_Task_BuscarEspacio" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_Task_BuscarEspacio" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_Task_BuscarEspacio" name="" content="" returnTypeFixed="true"/>
+          <operations xmi:type="expression:Operation" xmi:id="_Op_Buscar_Cupo">
+            <leftOperand xmi:type="expression:Expression" xmi:id="_LO_Buscar_Cupo" name="cupoSeleccionado" content="cupoSeleccionado" type="TYPE_VARIABLE" returnType="co.edu.eafit.ips.model.CupoAgenda">
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Buscar_Cupo" name="cupoSeleccionado" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CupoAgenda"/>
+            </leftOperand>
+            <rightOperand xmi:type="expression:Expression" xmi:id="_RO_Buscar_Cupo" name="buscarCupoAgenda()" content="import co.edu.eafit.ips.model.CupoAgenda&#xD;&#xA;import java.time.OffsetDateTime&#xD;&#xA;import java.time.ZoneOffset&#xD;&#xA;&#xD;&#xA;if (citaMedica != null &amp;&amp; citaMedica.cupoAsignado != null) {&#xD;&#xA;    citaMedica.cupoAsignado.disponible = true&#xD;&#xA;    citaMedica.estado = &quot;REPROGRAMADA&quot;&#xD;&#xA;    citaMedica.fechaActualizacion = OffsetDateTime.now(ZoneOffset.ofHours(-5))&#xD;&#xA;}&#xD;&#xA;&#xD;&#xA;CupoAgenda elegido = new CupoAgenda()&#xD;&#xA;    elegido.codigoCupo = &quot;CUPO-&quot; + System.currentTimeMillis()&#xD;&#xA;    elegido.especialidad = solicitudCita.especialidadRequerida ?: &quot;MEDICINA GENERAL&quot;&#xD;&#xA;    elegido.nombreMedico = &quot;Dr. Alejandro Restrepo&quot;&#xD;&#xA;    elegido.consultorio = &quot;204&quot;&#xD;&#xA;    elegido.sedeIPS = &quot;Sede Poblado - Consulta Externa&quot;&#xD;&#xA;    elegido.fechaHoraInicio = OffsetDateTime.now(ZoneOffset.ofHours(-5)).plusDays(2)&#xD;&#xA;    elegido.duracionMinutos = 20&#xD;&#xA;    elegido.disponible = true&#xD;&#xA;return elegido" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="co.edu.eafit.ips.model.CupoAgenda">
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Buscar_Sol" name="solicitudCita" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.SolicitudCita"/>
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Buscar_Cita" name="citaMedica" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CitaMedica"/>
+            </rightOperand>
+            <operator xmi:type="expression:Operator" xmi:id="_Opr_Buscar_Cupo" type="ASSIGNMENT"/>
+          </operations>
+          <operations xmi:type="expression:Operation" xmi:id="_Op_Buscar_Disp">
+            <leftOperand xmi:type="expression:Expression" xmi:id="_LO_Buscar_Disp" name="cupoDisponible" content="cupoDisponible" type="TYPE_VARIABLE" returnType="java.lang.Boolean">
+              <referencedElements xmi:type="process:Data" xmi:id="_Ref_Buscar_Disp" name="cupoDisponible" dataType="_DT_Boolean"/>
+            </leftOperand>
+            <rightOperand xmi:type="expression:Expression" xmi:id="_RO_Buscar_Disp" name="verificarDisponibilidad()" content="return (cupoSeleccionado != null &amp;&amp; cupoSeleccionado.disponible == true)" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="java.lang.Boolean">
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Buscar_Cupo2" name="cupoSeleccionado" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CupoAgenda"/>
+            </rightOperand>
+            <operator xmi:type="expression:Operator" xmi:id="_Opr_Buscar_Disp" type="ASSIGNMENT"/>
+          </operations>
+          <loopCondition xmi:type="expression:Expression" xmi:id="_LC_Task_BuscarEspacio" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+          <loopMaximum xmi:type="expression:Expression" xmi:id="_LM_Task_BuscarEspacio" name="" content="" returnType="java.lang.Integer" returnTypeFixed="true"/>
+          <cardinalityExpression xmi:type="expression:Expression" xmi:id="_CE_Task_BuscarEspacio" name="" content="" returnType="java.lang.Integer" returnTypeFixed="true"/>
+          <iteratorExpression xmi:type="expression:Expression" xmi:id="_IE_Task_BuscarEspacio" name="multiInstanceIterator" content="multiInstanceIterator" type="MULTIINSTANCE_ITERATOR_TYPE" returnType="java.lang.Object" returnTypeFixed="true"/>
+          <completionCondition xmi:type="expression:Expression" xmi:id="_CC_Task_BuscarEspacio" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+        </elements>
+        <elements xmi:type="process:ServiceTask" xmi:id="_Task_Registrar" documentation="Persiste la CitaMedica en el BDM de Bonita, marca el CupoAgenda como ocupado y sincroniza mediante RPA/JDBC con el sistema legado de la IPS." name="Registrar cita en sistema IPS y BDM" outgoing="_Flow_F11" incoming="_Flow_F_Espacio_Si">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_Task_Registrar" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_Task_Registrar" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_Task_Registrar" name="" content="" returnTypeFixed="true"/>
+          <operations xmi:type="expression:Operation" xmi:id="_Op_Registrar_Cita">
+            <leftOperand xmi:type="expression:Expression" xmi:id="_LO_Registrar_Cita" name="citaMedica" content="citaMedica" type="TYPE_VARIABLE" returnType="co.edu.eafit.ips.model.CitaMedica">
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Registrar_Cita" name="citaMedica" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CitaMedica"/>
+            </leftOperand>
+            <rightOperand xmi:type="expression:Expression" xmi:id="_RO_Registrar_Cita" name="registrarCitaEnBDM()" content="import co.edu.eafit.ips.model.CitaMedica&#xD;&#xA;import java.time.OffsetDateTime&#xD;&#xA;import java.time.ZoneOffset&#xD;&#xA;&#xD;&#xA;def ahora = OffsetDateTime.now(ZoneOffset.ofHours(-5))&#xD;&#xA;if (cupoSeleccionado != null) {&#xD;&#xA;    cupoSeleccionado.disponible = false&#xD;&#xA;}&#xD;&#xA;&#xD;&#xA;CitaMedica cita = (citaMedica != null) ? citaMedica : new CitaMedica()&#xD;&#xA;if (!cita.codigoCita) {&#xD;&#xA;    cita.codigoCita = &quot;CITA-${solicitudCita.codigoRadicado.replace(&apos;IPS-&apos;, &apos;&apos;)}&quot;&#xD;&#xA;}&#xD;&#xA;cita.fechaHoraCita = cupoSeleccionado != null ? cupoSeleccionado.fechaHoraInicio : ahora.plusDays(2)&#xD;&#xA;cita.especialidad = cupoSeleccionado != null ? cupoSeleccionado.especialidad : (solicitudCita.especialidadRequerida ?: &quot;MEDICINA GENERAL&quot;)&#xD;&#xA;cita.nombreMedico = cupoSeleccionado != null ? cupoSeleccionado.nombreMedico : &quot;Dr. Alejandro Restrepo&quot;&#xD;&#xA;cita.consultorio = cupoSeleccionado != null ? cupoSeleccionado.consultorio : &quot;204&quot;&#xD;&#xA;cita.sedeIPS = cupoSeleccionado != null ? cupoSeleccionado.sedeIPS : &quot;Sede Poblado&quot;&#xD;&#xA;cita.estado = &quot;AGENDADA&quot;&#xD;&#xA;cita.asignadaPorAuxiliar = false&#xD;&#xA;cita.confirmacionEnviada = false&#xD;&#xA;cita.recordatorioEnviado = false&#xD;&#xA;cita.fechaRegistro = cita.fechaRegistro ?: ahora&#xD;&#xA;cita.fechaActualizacion = ahora&#xD;&#xA;cita.paciente = solicitudCita.paciente&#xD;&#xA;cita.solicitudOrigen = solicitudCita&#xD;&#xA;cita.cupoAsignado = cupoSeleccionado&#xD;&#xA;&#xD;&#xA;solicitudCita.estadoSolicitud = &quot;AGENDADA&quot;&#xD;&#xA;return cita" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="co.edu.eafit.ips.model.CitaMedica">
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Registrar_Sol" name="solicitudCita" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.SolicitudCita"/>
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Registrar_Cupo" name="cupoSeleccionado" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CupoAgenda"/>
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Registrar_Cita2" name="citaMedica" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CitaMedica"/>
+            </rightOperand>
+            <operator xmi:type="expression:Operator" xmi:id="_Opr_Registrar_Cita" type="ASSIGNMENT"/>
+          </operations>
+          <loopCondition xmi:type="expression:Expression" xmi:id="_LC_Task_Registrar" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+          <loopMaximum xmi:type="expression:Expression" xmi:id="_LM_Task_Registrar" name="" content="" returnType="java.lang.Integer" returnTypeFixed="true"/>
+          <cardinalityExpression xmi:type="expression:Expression" xmi:id="_CE_Task_Registrar" name="" content="" returnType="java.lang.Integer" returnTypeFixed="true"/>
+          <iteratorExpression xmi:type="expression:Expression" xmi:id="_IE_Task_Registrar" name="multiInstanceIterator" content="multiInstanceIterator" type="MULTIINSTANCE_ITERATOR_TYPE" returnType="java.lang.Object" returnTypeFixed="true"/>
+          <completionCondition xmi:type="expression:Expression" xmi:id="_CC_Task_Registrar" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+        </elements>
+        <elements xmi:type="process:ServiceTask" xmi:id="_Task_Cancelar" documentation="Actualiza estado de CitaMedica a CANCELADA, libera el CupoAgenda en BDM y ejecuta el Bot RPA para liberar el espacio en el sistema de la IPS." name="Cancelar cita y liberar cupo" outgoing="_Flow_F18" incoming="_Flow_F_Resp_Cancela">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_Task_Cancelar" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_Task_Cancelar" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_Task_Cancelar" name="" content="" returnTypeFixed="true"/>
+          <operations xmi:type="expression:Operation" xmi:id="_Op_Cancelar_Cita">
+            <leftOperand xmi:type="expression:Expression" xmi:id="_LO_Cancelar_Cita" name="citaMedica" content="citaMedica" type="TYPE_VARIABLE" returnType="co.edu.eafit.ips.model.CitaMedica">
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Cancelar_Cita" name="citaMedica" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CitaMedica"/>
+            </leftOperand>
+            <rightOperand xmi:type="expression:Expression" xmi:id="_RO_Cancelar_Cita" name="cancelarCitaYLiberarCupo()" content="import java.time.OffsetDateTime&#xD;&#xA;import java.time.ZoneOffset&#xD;&#xA;&#xD;&#xA;def ahora = OffsetDateTime.now(ZoneOffset.ofHours(-5))&#xD;&#xA;if (citaMedica != null) {&#xD;&#xA;    if (citaMedica.cupoAsignado != null) {&#xD;&#xA;        citaMedica.cupoAsignado.disponible = true&#xD;&#xA;    }&#xD;&#xA;    citaMedica.estado = &quot;CANCELADA&quot;&#xD;&#xA;    citaMedica.respuestaRecordatorio = &quot;CANCELAR&quot;&#xD;&#xA;    citaMedica.fechaActualizacion = ahora&#xD;&#xA;}&#xD;&#xA;solicitudCita.estadoSolicitud = &quot;CANCELADA&quot;&#xD;&#xA;return citaMedica" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="co.edu.eafit.ips.model.CitaMedica">
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Cancelar_Cita2" name="citaMedica" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CitaMedica"/>
+              <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Cancelar_Sol" name="solicitudCita" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.SolicitudCita"/>
+            </rightOperand>
+            <operator xmi:type="expression:Operator" xmi:id="_Opr_Cancelar_Cita" type="ASSIGNMENT"/>
+          </operations>
+          <loopCondition xmi:type="expression:Expression" xmi:id="_LC_Task_Cancelar" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+          <loopMaximum xmi:type="expression:Expression" xmi:id="_LM_Task_Cancelar" name="" content="" returnType="java.lang.Integer" returnTypeFixed="true"/>
+          <cardinalityExpression xmi:type="expression:Expression" xmi:id="_CE_Task_Cancelar" name="" content="" returnType="java.lang.Integer" returnTypeFixed="true"/>
+          <iteratorExpression xmi:type="expression:Expression" xmi:id="_IE_Task_Cancelar" name="multiInstanceIterator" content="multiInstanceIterator" type="MULTIINSTANCE_ITERATOR_TYPE" returnType="java.lang.Object" returnTypeFixed="true"/>
+          <completionCondition xmi:type="expression:Expression" xmi:id="_CC_Task_Cancelar" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+        </elements>
+        <elements xmi:type="process:EndEvent" xmi:id="_End_Cancelada" documentation="Cita cancelada oportunamente y cupo liberado en la agenda médica de la IPS." name="Cita cancelada" incoming="_Flow_F18">
+          <dynamicLabel xmi:type="expression:Expression" xmi:id="_DL_End_Cancelada" name="" content="" returnTypeFixed="true"/>
+          <dynamicDescription xmi:type="expression:Expression" xmi:id="_DD_End_Cancelada" name="" content="" returnTypeFixed="true"/>
+          <stepSummary xmi:type="expression:Expression" xmi:id="_SS_End_Cancelada" name="" content="" returnTypeFixed="true"/>
+        </elements>
+      </elements>
+      <data xmi:type="process:BusinessObjectData" xmi:id="_Data_solicitudCita" name="solicitudCita" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.SolicitudCita">
+        <defaultValue xmi:type="expression:Expression" xmi:id="_DV_solicitudCita" name="inicializarSolicitudCita()" content="import co.edu.eafit.ips.model.SolicitudCita&#xD;&#xA;import co.edu.eafit.ips.model.Paciente&#xD;&#xA;import java.time.OffsetDateTime&#xD;&#xA;import java.time.ZoneOffset&#xD;&#xA;import java.time.format.DateTimeFormatter&#xD;&#xA;&#xD;&#xA;def ahora = OffsetDateTime.now(ZoneOffset.ofHours(-5))&#xD;&#xA;def sufijo = String.format(&quot;%04d&quot;, (Math.abs(UUID.randomUUID().hashCode()) % 10000))&#xD;&#xA;def radicado = &quot;IPS-${ahora.format(DateTimeFormatter.ofPattern(&apos;yyyyMMdd&apos;))}-${sufijo}&quot;&#xD;&#xA;&#xD;&#xA;def trunc = { String val, int maxLen, String defVal -&gt;&#xD;&#xA;    if (!val) return defVal&#xD;&#xA;    val = val.trim()&#xD;&#xA;    return val.length() &gt; maxLen ? val.substring(0, maxLen) : val&#xD;&#xA;}&#xD;&#xA;&#xD;&#xA;Paciente pacienteRef = new Paciente()&#xD;&#xA;pacienteRef.tipoDocumento = trunc(solicitudInput?.tipoDocumento, 10, &quot;CC&quot;).toUpperCase()&#xD;&#xA;pacienteRef.numeroDocumento = trunc(solicitudInput?.numeroDocumento, 30, &quot;1037654321&quot;)&#xD;&#xA;pacienteRef.nombreCompleto = trunc(solicitudInput?.nombreContacto, 150, &quot;Carlos Perez&quot;)&#xD;&#xA;pacienteRef.telefono = trunc(solicitudInput?.telefonoContacto, 30, &quot;+573001234567&quot;)&#xD;&#xA;pacienteRef.correoElectronico = trunc(solicitudInput?.correoContacto, 120, &quot;carlos.perez@correo.co&quot;)&#xD;&#xA;pacienteRef.eps = trunc(solicitudInput?.epsInformada, 80, &quot;EPS SURA&quot;)&#xD;&#xA;pacienteRef.activoEPS = true&#xD;&#xA;pacienteRef.autorizaTratamientoDatos = (solicitudInput?.autorizaTratamientoDatos != null) ? solicitudInput.autorizaTratamientoDatos : true&#xD;&#xA;pacienteRef.fechaConsentimiento = ahora&#xD;&#xA;&#xD;&#xA;def solicitud = new SolicitudCita()&#xD;&#xA;solicitud.codigoRadicado = radicado&#xD;&#xA;solicitud.canalOrigen = trunc(solicitudInput?.canalOrigen, 20, &quot;WHATSAPP&quot;).toUpperCase()&#xD;&#xA;solicitud.mensajeOriginal = solicitudInput?.mensajeOriginal?.trim() ?: &quot;&quot;&#xD;&#xA;solicitud.especialidadRequerida = &quot;MEDICINA GENERAL&quot;&#xD;&#xA;solicitud.nivelUrgencia = &quot;MEDIA&quot;&#xD;&#xA;solicitud.jornadaPreferida = &quot;MANANA&quot;&#xD;&#xA;solicitud.confianzaIA = 0.95d&#xD;&#xA;solicitud.datosCompletos = true&#xD;&#xA;solicitud.requiereExcepcion = false&#xD;&#xA;solicitud.estadoSolicitud = &quot;RECIBIDA&quot;&#xD;&#xA;solicitud.fechaRecepcion = ahora&#xD;&#xA;solicitud.paciente = pacienteRef&#xD;&#xA;&#xD;&#xA;return solicitud" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="co.edu.eafit.ips.model.SolicitudCita">
+          <referencedElements xmi:type="process:ContractInput" xmi:id="_Ref_Init_solicitudInput" name="solicitudInput" type="COMPLEX"/>
+        </defaultValue>
+      </data>
+      <data xmi:type="process:BusinessObjectData" xmi:id="_Data_citaMedica" name="citaMedica" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CitaMedica">
+        <defaultValue xmi:type="expression:Expression" xmi:id="_DV_citaMedica" name="" content="" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="co.edu.eafit.ips.model.CitaMedica"/>
+      </data>
+      <data xmi:type="process:BusinessObjectData" xmi:id="_Data_cupoSeleccionado" name="cupoSeleccionado" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CupoAgenda">
+        <defaultValue xmi:type="expression:Expression" xmi:id="_DV_cupoSeleccionado" name="" content="" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="co.edu.eafit.ips.model.CupoAgenda"/>
+      </data>
+      <data xmi:type="process:Data" xmi:id="_Data_cupoDisponible" name="cupoDisponible" dataType="_DT_Boolean">
+        <defaultValue xmi:type="expression:Expression" xmi:id="_DV_cupoDisponible" name="false" content="false" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </data>
+      <data xmi:type="process:Data" xmi:id="_Data_respuestaRecordatorio" name="respuestaRecordatorio" dataType="_DT_Text">
+        <defaultValue xmi:type="expression:Expression" xmi:id="_DV_respuestaRecordatorio" name="CONFIRMAR" content="CONFIRMAR" returnType="java.lang.String" returnTypeFixed="true"/>
+      </data>
+      <formMapping xmi:type="process:FormMapping" xmi:id="_FM_Pool" type="NONE">
+        <targetForm xmi:type="expression:Expression" xmi:id="_TF_Pool" name="" content="" type="FORM_REFERENCE_TYPE" returnTypeFixed="true"/>
+      </formMapping>
+      <overviewFormMapping xmi:type="process:FormMapping" xmi:id="_OFM_Pool" type="NONE">
+        <targetForm xmi:type="expression:Expression" xmi:id="_OTF_Pool" name="" content="" type="FORM_REFERENCE_TYPE" returnTypeFixed="true"/>
+      </overviewFormMapping>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F01" target="_Task_IA" source="_Start_Solicitud">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F01"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F01" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F02" target="_GW_DatosIA" source="_Task_IA">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F02"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F02" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F_Datos_Si" name="Sí" target="_Task_VerificarEPS" source="_GW_DatosIA">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F_Datos_Si"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F_Datos_Si" name="Sí" content="solicitudCita.datosCompletos == true &amp;&amp; solicitudCita.confianzaIA &gt;= 0.80d" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="java.lang.Boolean" returnTypeFixed="true">
+          <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Cond_Datos_Sol" name="solicitudCita" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.SolicitudCita"/>
+        </condition>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F_Datos_No" name="No (Datos incompletos)" target="_GW_JoinExcepcion" source="_GW_DatosIA" isDefault="true">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F_Datos_No"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F_Datos_No" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F04" target="_GW_EPS" source="_Task_VerificarEPS">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F04"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F04" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F_EPS_Si" name="Sí" target="_GW_JoinBusqueda" source="_GW_EPS">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F_EPS_Si"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F_EPS_Si" name="Sí" content="solicitudCita.paciente.activoEPS == true &amp;&amp; solicitudCita.autorizacionVigente == true" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="java.lang.Boolean" returnTypeFixed="true">
+          <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Cond_EPS_Sol" name="solicitudCita" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.SolicitudCita"/>
+        </condition>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F_EPS_No" name="No (Sin autorización)" target="_GW_JoinExcepcion" source="_GW_EPS" isDefault="true">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F_EPS_No"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F_EPS_No" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F_ToBuscar" target="_Task_BuscarEspacio" source="_GW_JoinBusqueda">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F_ToBuscar"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F_ToBuscar" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F07" target="_GW_Espacio" source="_Task_BuscarEspacio">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F07"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F07" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F_Espacio_Si" name="Sí" target="_Task_Registrar" source="_GW_Espacio">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F_Espacio_Si"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F_Espacio_Si" name="Sí" content="cupoDisponible == true" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="java.lang.Boolean" returnTypeFixed="true">
+          <referencedElements xmi:type="process:Data" xmi:id="_Ref_Cond_Espacio_Var" name="cupoDisponible" dataType="_DT_Boolean"/>
+        </condition>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F_Espacio_No" name="No" target="_GW_JoinExcepcion" source="_GW_Espacio" isDefault="true">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F_Espacio_No"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F_Espacio_No" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F_ToExcepcion" target="_Task_Excepcion" source="_GW_JoinExcepcion">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F_ToExcepcion"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F_ToExcepcion" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F10" target="_GW_ResolucionAuxiliar" source="_Task_Excepcion">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F10"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F10" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F_Aux_Cerrado" name="No" target="_End_Excepcion" source="_GW_ResolucionAuxiliar" isDefault="true">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F_Aux_Cerrado"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F_Aux_Cerrado" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F_Aux_Agendada" name="Sí" target="_GW_JoinConfirmar" source="_GW_ResolucionAuxiliar">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F_Aux_Agendada"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F_Aux_Agendada" name="Sí" content="citaMedica != null &amp;&amp; citaMedica.estado == &apos;AGENDADA&apos;" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="java.lang.Boolean" returnTypeFixed="true">
+          <referencedElements xmi:type="process:BusinessObjectData" xmi:id="_Ref_Cond_Aux_Cita" name="citaMedica" dataType="_DT_Business_Object" className="co.edu.eafit.ips.model.CitaMedica"/>
+        </condition>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F11" target="_GW_JoinConfirmar" source="_Task_Registrar">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F11"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F11" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F_ToConfirmar" target="_Task_Confirmar" source="_GW_JoinConfirmar">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F_ToConfirmar"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F_ToConfirmar" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F12" target="_Timer_24hAntes" source="_Task_Confirmar">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F12"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F12" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F12b" target="_Task_Recordatorio" source="_Timer_24hAntes">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F12b"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F12b" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F13" target="_Task_Responder" source="_Task_Recordatorio">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F13"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F13" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F14" target="_GW_Respuesta" source="_Task_Responder">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F14"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F14" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F_Resp_Confirma" name="Confirma" target="_End_Confirmada" source="_GW_Respuesta" isDefault="true">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F_Resp_Confirma"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F_Resp_Confirma" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F_Resp_Cancela" name="Cancela" target="_Task_Cancelar" source="_GW_Respuesta">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F_Resp_Cancela"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F_Resp_Cancela" name="Cancela" content="respuestaRecordatorio == &apos;CANCELAR&apos;" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="java.lang.Boolean" returnTypeFixed="true">
+          <referencedElements xmi:type="process:Data" xmi:id="_Ref_Cond_Cancela_Var" name="respuestaRecordatorio" dataType="_DT_Text"/>
+        </condition>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F_Resp_Reprograma" name="Reprograma" target="_GW_JoinBusqueda" source="_GW_Respuesta">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F_Resp_Reprograma"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F_Resp_Reprograma" name="Reprograma" content="respuestaRecordatorio == &apos;REPROGRAMAR&apos;" interpreter="GROOVY" type="TYPE_READ_ONLY_SCRIPT" returnType="java.lang.Boolean" returnTypeFixed="true">
+          <referencedElements xmi:type="process:Data" xmi:id="_Ref_Cond_Reprog_Var" name="respuestaRecordatorio" dataType="_DT_Text"/>
+        </condition>
+      </connections>
+      <connections xmi:type="process:SequenceFlow" xmi:id="_Flow_F18" target="_End_Cancelada" source="_Task_Cancelar">
+        <decisionTable xmi:type="decision:DecisionTable" xmi:id="_DT_F18"/>
+        <condition xmi:type="expression:Expression" xmi:id="_Cond_F18" name="" content="" returnType="java.lang.Boolean" returnTypeFixed="true"/>
+      </connections>
+      <actors xmi:type="process:Actor" xmi:id="_Actor_Paciente" documentation="Paciente o canal omnicanal (WhatsApp, Correo, Portal Web)" name="Paciente" initiator="true"/>
+      <actors xmi:type="process:Actor" xmi:id="_Actor_Auxiliar" documentation="Equipo de 4 auxiliares encargados de atender excepciones de agendamiento" name="Auxiliar de agendamiento"/>
+      <contract xmi:type="process:Contract" xmi:id="_Contract_Pool">
+        <inputs xmi:type="process:ContractInput" xmi:id="_CI_solicitudInput" name="solicitudInput" type="COMPLEX" description="Datos de entrada de la solicitud omnicanal de cita médica">
+          <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_solicitudInput"/>
+          <inputs xmi:type="process:ContractInput" xmi:id="_CI_canalOrigen" name="canalOrigen" description="WHATSAPP, CORREO, LLAMADA o PORTAL_WEB">
+            <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_canalOrigen"/>
+          </inputs>
+          <inputs xmi:type="process:ContractInput" xmi:id="_CI_mensajeOriginal" name="mensajeOriginal" description="Mensaje libre enviado por el paciente o transcripción de llamada">
+            <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_mensajeOriginal"/>
+          </inputs>
+          <inputs xmi:type="process:ContractInput" xmi:id="_CI_telefonoContacto" name="telefonoContacto">
+            <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_telefonoContacto"/>
+          </inputs>
+          <inputs xmi:type="process:ContractInput" xmi:id="_CI_correoContacto" name="correoContacto">
+            <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_correoContacto"/>
+          </inputs>
+          <inputs xmi:type="process:ContractInput" xmi:id="_CI_tipoDocumento" name="tipoDocumento">
+            <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_tipoDocumento"/>
+          </inputs>
+          <inputs xmi:type="process:ContractInput" xmi:id="_CI_numeroDocumento" name="numeroDocumento">
+            <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_numeroDocumento"/>
+          </inputs>
+          <inputs xmi:type="process:ContractInput" xmi:id="_CI_nombreContacto" name="nombreContacto">
+            <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_nombreContacto"/>
+          </inputs>
+          <inputs xmi:type="process:ContractInput" xmi:id="_CI_epsInformada" name="epsInformada">
+            <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_epsInformada"/>
+          </inputs>
+          <inputs xmi:type="process:ContractInput" xmi:id="_CI_autorizaTratamientoDatos" name="autorizaTratamientoDatos" type="BOOLEAN" description="Consentimiento expreso Ley 1581 de 2012">
+            <mapping xmi:type="process:ContractInputMapping" xmi:id="_CIM_autorizaTratamientoDatos"/>
+          </inputs>
+        </inputs>
+        <constraints xmi:type="process:ContractConstraint" xmi:id="_CC_Ley1581" expression="solicitudInput.autorizaTratamientoDatos == true" errorMessage="Debe autorizar el tratamiento de datos personales de salud conforme a la Ley 1581 de 2012." name="Regla_Ley_1581_HabeasData">
+          <inputNames>solicitudInput</inputNames>
+        </constraints>
+        <constraints xmi:type="process:ContractConstraint" xmi:id="_CC_MensajeNoVacio" expression="solicitudInput.mensajeOriginal != null &amp;&amp; solicitudInput.mensajeOriginal.trim().length() &gt;= 5" errorMessage="El mensaje de la solicitud no puede estar vacío." name="Regla_Mensaje_No_Vacio">
+          <inputNames>solicitudInput</inputNames>
+        </constraints>
+      </contract>
+    </elements>
+    <datatypes xmi:type="process:BooleanType" xmi:id="_DT_Boolean" name="Boolean"/>
+    <datatypes xmi:type="process:DateType" xmi:id="_DT_Date" name="Date"/>
+    <datatypes xmi:type="process:IntegerType" xmi:id="_DT_Integer" name="Integer"/>
+    <datatypes xmi:type="process:LongType" xmi:id="_DT_Long" name="Long"/>
+    <datatypes xmi:type="process:DoubleType" xmi:id="_DT_Double" name="Double"/>
+    <datatypes xmi:type="process:StringType" xmi:id="_DT_Text" name="Text"/>
+    <datatypes xmi:type="process:JavaType" xmi:id="_DT_Java_object" name="Java_object"/>
+    <datatypes xmi:type="process:XMLType" xmi:id="_DT_XML" name="XML"/>
+    <datatypes xmi:type="process:BusinessObjectType" xmi:id="_DT_Business_Object" name="Business_Object"/>
+  </process:MainProcess>
+  <notation:Diagram xmi:id="_Notation_Diagram" type="Process" element="_Main_AgendamientoCitasIPS" name="AgendamientoCitasIPS" measurementUnit="Pixel">
+    <children xmi:type="notation:Node" xmi:id="_Node_Pool" type="2007" element="_Pool_AgendamientoCitasIPS">
+      <children xmi:type="notation:DecorationNode" xmi:id="_Dec_Pool_Label" type="5008"/>
+      <children xmi:type="notation:DecorationNode" xmi:id="_Dec_Pool_Comp" type="7001">
+        <children xmi:type="notation:Node" xmi:id="_Node_Lane_Paciente" type="3007" element="_Lane_Paciente">
+          <children xmi:type="notation:DecorationNode" xmi:id="_Dec_Lane_Paciente_Label" type="5007"/>
+          <children xmi:type="notation:DecorationNode" xmi:id="_Dec_Lane_Paciente_Comp" type="7002">
+            <children xmi:type="notation:Shape" xmi:id="_Shape_Start_Solicitud" type="3002" element="_Start_Solicitud" fontName="Segoe UI">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_Start_Solicitud" type="5024">
+                <layoutConstraint xmi:type="notation:Location" xmi:id="_Loc_Start_Solicitud" y="5"/>
+              </children>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_Start_Solicitud" x="60" y="55"/>
+            </children>
+            <children xmi:type="notation:Shape" xmi:id="_Shape_End_Excepcion" type="3003" element="_End_Excepcion" fontName="Segoe UI">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_End_Excepcion" type="5025">
+                <layoutConstraint xmi:type="notation:Location" xmi:id="_Loc_End_Excepcion" y="5"/>
+              </children>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_End_Excepcion" x="1220" y="55"/>
+            </children>
+            <children xmi:type="notation:Shape" xmi:id="_Shape_Task_Responder" type="3005" element="_Task_Responder" fontName="Segoe UI" fillColor="14334392" lineColor="10710316">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_Task_Responder" type="5005"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_Task_Responder" x="1550" y="40" width="130" height="65"/>
+            </children>
+          </children>
+          <styles xmi:type="notation:DescriptionStyle" xmi:id="_DS_Lane_Paciente"/>
+          <styles xmi:type="notation:FontStyle" xmi:id="_FS_Lane_Paciente" fontName="Segoe UI"/>
+          <styles xmi:type="notation:LineStyle" xmi:id="_LS_Lane_Paciente"/>
+          <styles xmi:type="notation:FillStyle" xmi:id="_FiS_Lane_Paciente"/>
+          <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_Lane_Paciente" x="30" y="0" width="2100" height="150"/>
+        </children>
+        <children xmi:type="notation:Node" xmi:id="_Node_Lane_Auxiliar" type="3007" element="_Lane_Auxiliar">
+          <children xmi:type="notation:DecorationNode" xmi:id="_Dec_Lane_Auxiliar_Label" type="5007"/>
+          <children xmi:type="notation:DecorationNode" xmi:id="_Dec_Lane_Auxiliar_Comp" type="7002">
+            <children xmi:type="notation:Shape" xmi:id="_Shape_GW_JoinExcepcion" type="3008" element="_GW_JoinExcepcion" fontName="Segoe UI">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_GW_JoinExcepcion" type="5026">
+                <layoutConstraint xmi:type="notation:Location" xmi:id="_Loc_GW_JoinExcepcion" y="5"/>
+              </children>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_GW_JoinExcepcion" x="935" y="55"/>
+            </children>
+            <children xmi:type="notation:Shape" xmi:id="_Shape_Task_Excepcion" type="3005" element="_Task_Excepcion" fontName="Segoe UI" fillColor="14334392" lineColor="10710316">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_Task_Excepcion" type="5005"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_Task_Excepcion" x="1030" y="45" width="130" height="65"/>
+            </children>
+            <children xmi:type="notation:Shape" xmi:id="_Shape_GW_ResolucionAuxiliar" type="3008" element="_GW_ResolucionAuxiliar" fontName="Segoe UI">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_GW_ResolucionAuxiliar" type="5026">
+                <layoutConstraint xmi:type="notation:Location" xmi:id="_Loc_GW_ResolucionAuxiliar" y="5"/>
+              </children>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_GW_ResolucionAuxiliar" x="1215" y="55"/>
+            </children>
+          </children>
+          <styles xmi:type="notation:DescriptionStyle" xmi:id="_DS_Lane_Auxiliar"/>
+          <styles xmi:type="notation:FontStyle" xmi:id="_FS_Lane_Auxiliar" fontName="Segoe UI"/>
+          <styles xmi:type="notation:LineStyle" xmi:id="_LS_Lane_Auxiliar"/>
+          <styles xmi:type="notation:FillStyle" xmi:id="_FiS_Lane_Auxiliar"/>
+          <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_Lane_Auxiliar" x="30" y="150" width="2100" height="160"/>
+        </children>
+        <children xmi:type="notation:Node" xmi:id="_Node_Lane_Orquestador" type="3007" element="_Lane_Orquestador">
+          <children xmi:type="notation:DecorationNode" xmi:id="_Dec_Lane_Orquestador_Label" type="5007"/>
+          <children xmi:type="notation:DecorationNode" xmi:id="_Dec_Lane_Orquestador_Comp" type="7002">
+            <children xmi:type="notation:Shape" xmi:id="_Shape_GW_DatosIA" type="3008" element="_GW_DatosIA" fontName="Segoe UI">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_GW_DatosIA" type="5026">
+                <layoutConstraint xmi:type="notation:Location" xmi:id="_Loc_GW_DatosIA" y="5"/>
+              </children>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_GW_DatosIA" x="325" y="50"/>
+            </children>
+            <children xmi:type="notation:Shape" xmi:id="_Shape_GW_EPS" type="3008" element="_GW_EPS" fontName="Segoe UI">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_GW_EPS" type="5026">
+                <layoutConstraint xmi:type="notation:Location" xmi:id="_Loc_GW_EPS" y="5"/>
+              </children>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_GW_EPS" x="605" y="50"/>
+            </children>
+            <children xmi:type="notation:Shape" xmi:id="_Shape_GW_Espacio" type="3008" element="_GW_Espacio" fontName="Segoe UI">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_GW_Espacio" type="5026">
+                <layoutConstraint xmi:type="notation:Location" xmi:id="_Loc_GW_Espacio" y="5"/>
+              </children>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_GW_Espacio" x="935" y="50"/>
+            </children>
+            <children xmi:type="notation:Shape" xmi:id="_Shape_GW_JoinConfirmar" type="3008" element="_GW_JoinConfirmar" fontName="Segoe UI">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_GW_JoinConfirmar" type="5026">
+                <layoutConstraint xmi:type="notation:Location" xmi:id="_Loc_GW_JoinConfirmar" y="5"/>
+              </children>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_GW_JoinConfirmar" x="1215" y="50"/>
+            </children>
+            <children xmi:type="notation:Shape" xmi:id="_Shape_Task_Confirmar" type="3027" element="_Task_Confirmar" fontName="Segoe UI" fillColor="14334392" lineColor="10710316">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_Task_Confirmar" type="5017"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_Task_Confirmar" x="1305" y="40" width="130" height="65"/>
+            </children>
+            <children xmi:type="notation:Shape" xmi:id="_Shape_Timer_24hAntes" type="3017" element="_Timer_24hAntes" fontName="Segoe UI">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_Timer_24hAntes" type="5032">
+                <layoutConstraint xmi:type="notation:Location" xmi:id="_Loc_Timer_24hAntes" y="5"/>
+              </children>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_Timer_24hAntes" x="1475" y="55"/>
+            </children>
+            <children xmi:type="notation:Shape" xmi:id="_Shape_Task_Recordatorio" type="3027" element="_Task_Recordatorio" fontName="Segoe UI" fillColor="14334392" lineColor="10710316">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_Task_Recordatorio" type="5017"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_Task_Recordatorio" x="1550" y="40" width="130" height="65"/>
+            </children>
+            <children xmi:type="notation:Shape" xmi:id="_Shape_GW_Respuesta" type="3008" element="_GW_Respuesta" fontName="Segoe UI">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_GW_Respuesta" type="5026">
+                <layoutConstraint xmi:type="notation:Location" xmi:id="_Loc_GW_Respuesta" y="5"/>
+              </children>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_GW_Respuesta" x="1755" y="50"/>
+            </children>
+            <children xmi:type="notation:Shape" xmi:id="_Shape_End_Confirmada" type="3003" element="_End_Confirmada" fontName="Segoe UI">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_End_Confirmada" type="5025">
+                <layoutConstraint xmi:type="notation:Location" xmi:id="_Loc_End_Confirmada" y="5"/>
+              </children>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_End_Confirmada" x="1990" y="55"/>
+            </children>
+          </children>
+          <styles xmi:type="notation:DescriptionStyle" xmi:id="_DS_Lane_Orquestador"/>
+          <styles xmi:type="notation:FontStyle" xmi:id="_FS_Lane_Orquestador" fontName="Segoe UI"/>
+          <styles xmi:type="notation:LineStyle" xmi:id="_LS_Lane_Orquestador"/>
+          <styles xmi:type="notation:FillStyle" xmi:id="_FiS_Lane_Orquestador"/>
+          <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_Lane_Orquestador" x="30" y="310" width="2100" height="150"/>
+        </children>
+        <children xmi:type="notation:Node" xmi:id="_Node_Lane_IA" type="3007" element="_Lane_IA">
+          <children xmi:type="notation:DecorationNode" xmi:id="_Dec_Lane_IA_Label" type="5007"/>
+          <children xmi:type="notation:DecorationNode" xmi:id="_Dec_Lane_IA_Comp" type="7002">
+            <children xmi:type="notation:Shape" xmi:id="_Shape_Task_IA" type="3027" element="_Task_IA" fontName="Segoe UI" fillColor="14334392" lineColor="10710316">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_Task_IA" type="5017"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_Task_IA" x="140" y="35" width="130" height="65"/>
+            </children>
+          </children>
+          <styles xmi:type="notation:DescriptionStyle" xmi:id="_DS_Lane_IA"/>
+          <styles xmi:type="notation:FontStyle" xmi:id="_FS_Lane_IA" fontName="Segoe UI"/>
+          <styles xmi:type="notation:LineStyle" xmi:id="_LS_Lane_IA"/>
+          <styles xmi:type="notation:FillStyle" xmi:id="_FiS_Lane_IA"/>
+          <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_Lane_IA" x="30" y="460" width="2100" height="140"/>
+        </children>
+        <children xmi:type="notation:Node" xmi:id="_Node_Lane_RPA" type="3007" element="_Lane_RPA">
+          <children xmi:type="notation:DecorationNode" xmi:id="_Dec_Lane_RPA_Label" type="5007"/>
+          <children xmi:type="notation:DecorationNode" xmi:id="_Dec_Lane_RPA_Comp" type="7002">
+            <children xmi:type="notation:Shape" xmi:id="_Shape_Task_VerificarEPS" type="3027" element="_Task_VerificarEPS" fontName="Segoe UI" fillColor="14334392" lineColor="10710316">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_Task_VerificarEPS" type="5017"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_Task_VerificarEPS" x="415" y="45" width="130" height="65"/>
+            </children>
+            <children xmi:type="notation:Shape" xmi:id="_Shape_GW_JoinBusqueda" type="3008" element="_GW_JoinBusqueda" fontName="Segoe UI">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_GW_JoinBusqueda" type="5026">
+                <layoutConstraint xmi:type="notation:Location" xmi:id="_Loc_GW_JoinBusqueda" y="5"/>
+              </children>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_GW_JoinBusqueda" x="705" y="55"/>
+            </children>
+            <children xmi:type="notation:Shape" xmi:id="_Shape_Task_BuscarEspacio" type="3027" element="_Task_BuscarEspacio" fontName="Segoe UI" fillColor="14334392" lineColor="10710316">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_Task_BuscarEspacio" type="5017"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_Task_BuscarEspacio" x="785" y="45" width="130" height="65"/>
+            </children>
+            <children xmi:type="notation:Shape" xmi:id="_Shape_Task_Registrar" type="3027" element="_Task_Registrar" fontName="Segoe UI" fillColor="14334392" lineColor="10710316">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_Task_Registrar" type="5017"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_Task_Registrar" x="1030" y="45" width="130" height="65"/>
+            </children>
+            <children xmi:type="notation:Shape" xmi:id="_Shape_Task_Cancelar" type="3027" element="_Task_Cancelar" fontName="Segoe UI" fillColor="14334392" lineColor="10710316">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_Task_Cancelar" type="5017"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_Task_Cancelar" x="1815" y="45" width="130" height="65"/>
+            </children>
+            <children xmi:type="notation:Shape" xmi:id="_Shape_End_Cancelada" type="3003" element="_End_Cancelada" fontName="Segoe UI">
+              <children xmi:type="notation:DecorationNode" xmi:id="_Label_End_Cancelada" type="5025">
+                <layoutConstraint xmi:type="notation:Location" xmi:id="_Loc_End_Cancelada" y="5"/>
+              </children>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_End_Cancelada" x="1990" y="60"/>
+            </children>
+          </children>
+          <styles xmi:type="notation:DescriptionStyle" xmi:id="_DS_Lane_RPA"/>
+          <styles xmi:type="notation:FontStyle" xmi:id="_FS_Lane_RPA" fontName="Segoe UI"/>
+          <styles xmi:type="notation:LineStyle" xmi:id="_LS_Lane_RPA"/>
+          <styles xmi:type="notation:FillStyle" xmi:id="_FiS_Lane_RPA"/>
+          <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_Lane_RPA" x="30" y="600" width="2100" height="180"/>
+        </children>
+      </children>
+      <styles xmi:type="notation:DescriptionStyle" xmi:id="_DS_Pool"/>
+      <styles xmi:type="notation:FontStyle" xmi:id="_FS_Pool" fontName="Segoe UI"/>
+      <styles xmi:type="notation:LineStyle" xmi:id="_LS_Pool"/>
+      <styles xmi:type="notation:FillStyle" xmi:id="_FiS_Pool"/>
+      <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Bnd_Pool" width="2130" height="780"/>
+    </children>
+    <styles xmi:type="notation:DiagramStyle" xmi:id="_DiagramStyle"/>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F01" type="4001" element="_Flow_F01" source="_Shape_Start_Solicitud" target="_Shape_Task_IA" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F01" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F01" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F01" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F01" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F02" type="4001" element="_Flow_F02" source="_Shape_Task_IA" target="_Shape_GW_DatosIA" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F02" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F02" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F02" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F02" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F_Datos_Si" type="4001" element="_Flow_F_Datos_Si" source="_Shape_GW_DatosIA" target="_Shape_Task_VerificarEPS" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F_Datos_Si" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F_Datos_Si" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F_Datos_Si" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F_Datos_Si" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F_Datos_No" type="4001" element="_Flow_F_Datos_No" source="_Shape_GW_DatosIA" target="_Shape_GW_JoinExcepcion" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F_Datos_No" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F_Datos_No" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F_Datos_No" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F_Datos_No" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F04" type="4001" element="_Flow_F04" source="_Shape_Task_VerificarEPS" target="_Shape_GW_EPS" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F04" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F04" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F04" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F04" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F_EPS_Si" type="4001" element="_Flow_F_EPS_Si" source="_Shape_GW_EPS" target="_Shape_GW_JoinBusqueda" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F_EPS_Si" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F_EPS_Si" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F_EPS_Si" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F_EPS_Si" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F_EPS_No" type="4001" element="_Flow_F_EPS_No" source="_Shape_GW_EPS" target="_Shape_GW_JoinExcepcion" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F_EPS_No" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F_EPS_No" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F_EPS_No" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F_EPS_No" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F_ToBuscar" type="4001" element="_Flow_F_ToBuscar" source="_Shape_GW_JoinBusqueda" target="_Shape_Task_BuscarEspacio" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F_ToBuscar" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F_ToBuscar" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F_ToBuscar" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F_ToBuscar" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F07" type="4001" element="_Flow_F07" source="_Shape_Task_BuscarEspacio" target="_Shape_GW_Espacio" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F07" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F07" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F07" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F07" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F_Espacio_Si" type="4001" element="_Flow_F_Espacio_Si" source="_Shape_GW_Espacio" target="_Shape_Task_Registrar" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F_Espacio_Si" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F_Espacio_Si" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F_Espacio_Si" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F_Espacio_Si" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F_Espacio_No" type="4001" element="_Flow_F_Espacio_No" source="_Shape_GW_Espacio" target="_Shape_GW_JoinExcepcion" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F_Espacio_No" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F_Espacio_No" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F_Espacio_No" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F_Espacio_No" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F_ToExcepcion" type="4001" element="_Flow_F_ToExcepcion" source="_Shape_GW_JoinExcepcion" target="_Shape_Task_Excepcion" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F_ToExcepcion" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F_ToExcepcion" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F_ToExcepcion" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F_ToExcepcion" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F10" type="4001" element="_Flow_F10" source="_Shape_Task_Excepcion" target="_Shape_GW_ResolucionAuxiliar" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F10" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F10" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F10" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F10" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F_Aux_Cerrado" type="4001" element="_Flow_F_Aux_Cerrado" source="_Shape_GW_ResolucionAuxiliar" target="_Shape_End_Excepcion" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F_Aux_Cerrado" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F_Aux_Cerrado" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F_Aux_Cerrado" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F_Aux_Cerrado" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F_Aux_Agendada" type="4001" element="_Flow_F_Aux_Agendada" source="_Shape_GW_ResolucionAuxiliar" target="_Shape_GW_JoinConfirmar" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F_Aux_Agendada" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F_Aux_Agendada" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F_Aux_Agendada" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F_Aux_Agendada" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F11" type="4001" element="_Flow_F11" source="_Shape_Task_Registrar" target="_Shape_GW_JoinConfirmar" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F11" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F11" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F11" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F11" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F_ToConfirmar" type="4001" element="_Flow_F_ToConfirmar" source="_Shape_GW_JoinConfirmar" target="_Shape_Task_Confirmar" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F_ToConfirmar" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F_ToConfirmar" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F_ToConfirmar" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F_ToConfirmar" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F12" type="4001" element="_Flow_F12" source="_Shape_Task_Confirmar" target="_Shape_Timer_24hAntes" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F12" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F12" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F12" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F12" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F12b" type="4001" element="_Flow_F12b" source="_Shape_Timer_24hAntes" target="_Shape_Task_Recordatorio" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F12b" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F12b" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F12b" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F12b" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F13" type="4001" element="_Flow_F13" source="_Shape_Task_Recordatorio" target="_Shape_Task_Responder" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F13" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F13" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F13" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F13" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F14" type="4001" element="_Flow_F14" source="_Shape_Task_Responder" target="_Shape_GW_Respuesta" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F14" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F14" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F14" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F14" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F_Resp_Confirma" type="4001" element="_Flow_F_Resp_Confirma" source="_Shape_GW_Respuesta" target="_Shape_End_Confirmada" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F_Resp_Confirma" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F_Resp_Confirma" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F_Resp_Confirma" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F_Resp_Confirma" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F_Resp_Cancela" type="4001" element="_Flow_F_Resp_Cancela" source="_Shape_GW_Respuesta" target="_Shape_Task_Cancelar" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F_Resp_Cancela" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F_Resp_Cancela" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F_Resp_Cancela" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F_Resp_Cancela" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F_Resp_Reprograma" type="4001" element="_Flow_F_Resp_Reprograma" source="_Shape_GW_Respuesta" target="_Shape_GW_JoinBusqueda" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F_Resp_Reprograma" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F_Resp_Reprograma" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F_Resp_Reprograma" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F_Resp_Reprograma" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+    <edges xmi:type="notation:Connector" xmi:id="_Edge_F18" type="4001" element="_Flow_F18" source="_Shape_Task_Cancelar" target="_Shape_End_Cancelada" roundedBendpointsRadius="10" routing="Rectilinear">
+      <children xmi:type="notation:DecorationNode" xmi:id="_EdgeLabel_F18" type="6001">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_EdgeLoc_F18" y="-10"/>
+      </children>
+      <styles xmi:type="notation:FontStyle" xmi:id="_EdgeFS_F18" fontName="Segoe UI"/>
+      <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EdgeBP_F18" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+    </edges>
+  </notation:Diagram>
+</xmi:XMI>

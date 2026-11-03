@@ -160,7 +160,7 @@
                         <queryParameter name="paciente" className="co.edu.eafit.ips.model.Paciente"/>
                     </queryParameters>
                 </query>
-                <query name="findByCodigoCita" content="SELECT c FROM CitaMedica c WHERE c.codigoCita = :codigoCita" returnType="co.edu.eafit.ips.model.CitaMedica">
+                <query name="buscarPorCodigoCita" content="SELECT c FROM CitaMedica c WHERE c.codigoCita = :codigoCita" returnType="co.edu.eafit.ips.model.CitaMedica">
                     <queryParameters>
                         <queryParameter name="codigoCita" className="java.lang.String"/>
                     </queryParameters>
